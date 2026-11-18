@@ -152,6 +152,14 @@ python -m pytest tests/ -q        # offline suite (103 tests)
 python tests/smoke_live.py        # live smoke: 6 checks (needs network + uvx)
 ```
 
+## Cite this project
+
+If you use all-mcp, build on it, or write about it, please credit the source:
+
+> Abbasi, Mohammad. *all-mcp — One MCP Server for All of Them*. v0.1.0, 2026. https://github.com/mohammad-abbasi-sh/all-mcp
+
+A ready-to-copy citation is also available from GitHub's **Cite this repository** button (see `CITATION.cff`). The router design and the tool index are Mohammad Abbasi's work — commercial use needs a separate license (see below).
+
 ## License
 
 PolyForm Noncommercial 1.0.0 — free for personal and non-commercial use. Commercial use needs a separate license: contact [Mohammad Abbasi](https://github.com/mohammad-abbasi-sh).
