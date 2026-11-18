@@ -1,0 +1,1568 @@
+<!doctype html>
+<html lang="fa" dir="rtl" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>all-mcp — یک MCP برای همه‌چیز | One MCP for everything</title>
+<meta name="description" content="Chat with all 60 MCP servers (Turkey, Germany, Bonbama) through one local router. No backend, no account — everything runs on your machine.">
+<meta property="og:title" content="all-mcp — One MCP for everything">
+<meta property="og:description" content="Ask in any language — the chat routes to the right MCP and answers. 60 servers, 324 tools, local-first.">
+<link rel="icon" href="assets/mascot-finn-neutral.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Vazirmatn:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============ all-mcp chat — tokens (premium redesign family: teal + blue) ============ */
+:root{
+  --teal:#0E8F76; --teal-bright:#3EC9A7; --teal-deep:#102A2C;
+  --blue:#4967E9; --blue-bright:#6B8AF0; --gold:#D89C45;
+  --radius:18px; --radius-sm:12px;
+  --font:'Vazirmatn','Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+}
+[data-theme="dark"]{
+  --bg:#0B1210; --bg2:#0E1714; --surface:#122019; --surface2:#16281F; --card:#152420;
+  --border:rgba(255,255,255,.09); --border-strong:rgba(255,255,255,.16);
+  --text:#EAF2ED; --muted:#9DB4AB; --muted2:#7A938A;
+  --accent:var(--teal-bright); --accent-bg:rgba(62,201,167,.14);
+  --accent2:var(--blue-bright); --accent2-bg:rgba(107,138,240,.14);
+  --user-bg:#123B31; --user-text:#EAF2ED;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+  --input-bg:#0E1714; --code-bg:#0A0F0D;
+  --ok:#3EC9A7; --warn:#E7A47C; --bad:#F0837C;
+}
+[data-theme="light"]{
+  --bg:#F7F9F8; --bg2:#EFF4F2; --surface:#FFFFFF; --surface2:#F1F6F4; --card:#FFFFFF;
+  --border:rgba(23,43,43,.12); --border-strong:rgba(23,43,43,.22);
+  --text:#172B2B; --muted:#5E7270; --muted2:#7A8F8C;
+  --accent:var(--teal); --accent-bg:rgba(14,143,118,.10);
+  --accent2:var(--blue); --accent2-bg:rgba(73,103,233,.09);
+  --user-bg:#DFF2EC; --user-text:#123B31;
+  --shadow:0 10px 30px rgba(23,43,43,.10);
+  --input-bg:#FFFFFF; --code-bg:#102A2C;
+  --ok:#0E8F76; --warn:#C56B46; --bad:#C0392B;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text); font-family:var(--font);
+  font-size:16px; line-height:1.65; min-height:100vh;
+  display:flex; flex-direction:column;
+  -webkit-font-smoothing:antialiased;
+}
+[dir="ltr"] body{letter-spacing:0}
+a{color:var(--accent); text-decoration:none}
+a:hover{text-decoration:underline}
+button{font-family:var(--font); cursor:pointer; border:none; background:none; color:inherit}
+input,textarea,select{font-family:var(--font); color:var(--text)}
+img{max-width:100%}
+::selection{background:var(--accent); color:#fff}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:6px}
+
+/* ============ header ============ */
+header{
+  position:sticky; top:0; z-index:50;
+  background:color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+}
+.header-in{
+  max-width:1060px; margin:0 auto; padding:10px 16px;
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+}
+.logo{display:flex; align-items:center; gap:9px; color:var(--text); font-weight:800; font-size:19px; letter-spacing:-.01em}
+.logo:hover{text-decoration:none}
+.logo-mark{
+  width:34px; height:34px; border-radius:10px; flex:none;
+  background:linear-gradient(135deg, var(--teal), var(--blue));
+  display:flex; align-items:center; justify-content:center;
+  color:#fff; font-size:19px; font-weight:800;
+}
+.logo small{display:block; font-size:11px; font-weight:500; color:var(--muted); line-height:1.2}
+.header-spacer{flex:1}
+.pill{
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:12.5px; font-weight:600; padding:5px 11px; border-radius:999px;
+  border:1px solid var(--border); background:var(--surface); color:var(--muted);
+  white-space:nowrap;
+}
+.pill .dot{width:8px; height:8px; border-radius:50%; background:var(--muted2); flex:none}
+.pill.online{color:var(--ok); border-color:color-mix(in srgb, var(--ok) 40%, transparent)}
+.pill.online .dot{background:var(--ok); box-shadow:0 0 0 3px color-mix(in srgb, var(--ok) 22%, transparent)}
+.pill.offline{color:var(--warn)}
+.pill.offline .dot{background:var(--warn)}
+.pill.demo{color:var(--accent2); border-color:color-mix(in srgb, var(--accent2) 40%, transparent)}
+.pill.demo .dot{background:var(--accent2)}
+.icon-btn{
+  width:38px; height:38px; border-radius:11px; flex:none;
+  display:inline-flex; align-items:center; justify-content:center;
+  border:1px solid var(--border); background:var(--surface);
+  font-size:18px; line-height:1;
+}
+.icon-btn:hover{border-color:var(--border-strong); background:var(--surface2)}
+.country-chip{
+  display:inline-flex; align-items:center; gap:7px;
+  height:38px; padding:0 12px; border-radius:11px; flex:none;
+  border:1px solid var(--border); background:var(--surface);
+  font-size:14px; font-weight:600;
+}
+.country-chip:hover{border-color:var(--border-strong); background:var(--surface2)}
+.country-chip .flag{font-size:19px; line-height:1}
+select.lang{
+  height:38px; border-radius:11px; border:1px solid var(--border);
+  background:var(--surface); font-size:13.5px; font-weight:600; padding:0 8px; max-width:96px;
+}
+
+/* ============ layout ============ */
+main{flex:1; width:100%; max-width:880px; margin:0 auto; padding:0 16px 24px; display:flex; flex-direction:column}
+.view{display:none; flex:1; flex-direction:column; min-height:0}
+.view.active{display:flex}
+.foot{
+  border-top:1px solid var(--border); padding:18px 16px 26px;
+  color:var(--muted); font-size:13px; line-height:1.7;
+}
+.foot-in{max-width:880px; margin:0 auto}
+.foot-links{display:flex; flex-wrap:wrap; gap:6px 18px; margin-top:8px}
+.foot-links a{color:var(--muted); font-weight:600}
+.foot-links a:hover{color:var(--accent)}
+
+/* ============ mascot ============ */
+.mascot{position:relative; display:inline-flex; align-items:flex-end; justify-content:center; flex:none}
+.mascot img{display:block; height:100%; width:auto; object-fit:contain; filter:drop-shadow(0 10px 18px rgba(0,0,0,.28))}
+.mascot-float{animation:mascot-float 4.2s ease-in-out infinite}
+.mascot-bounce{animation:mascot-bounce 1.1s ease-in-out infinite}
+.mascot-wave{animation:mascot-wave 1.6s ease-in-out 2}
+@keyframes mascot-float{0%,100%{transform:translateY(0) rotate(-.6deg)}50%{transform:translateY(-7px) rotate(.6deg)}}
+@keyframes mascot-bounce{0%,100%{transform:translateY(0)}30%{transform:translateY(-9px) scaleY(1.02)}55%{transform:translateY(0) scaleY(.96)}70%{transform:translateY(-3px)}}
+@keyframes mascot-wave{0%,100%{transform:rotate(0)}20%{transform:rotate(3deg) translateY(-3px)}40%{transform:rotate(-3deg)}60%{transform:rotate(2deg)}}
+.mascot-blink{animation:mascot-blink 5.4s ease-in-out infinite}
+@keyframes mascot-blink{0%,92%,100%{transform:scaleY(1)}94%{transform:scaleY(.965)}96%{transform:scaleY(1)}}
+/* TODO(video-loops): short mascot video loops (like mamal's avatar dances)
+   plug in here — a <video autoplay loop muted playsinline> inside
+   .mascot-video-slot replaces the <img> per state (greet/think/celebrate).
+   Until then the slot stays empty and the <img> is the only visual. */
+.mascot-video-slot{display:contents}
+@media (prefers-reduced-motion:reduce){
+  .mascot-float,.mascot-bounce,.mascot-wave,.mascot-blink,.typing-dot,.trace-line{animation:none !important}
+  *{scroll-behavior:auto !important}
+}
+
+/* ============ onboarding ============ */
+.onb{flex:1; display:flex; flex-direction:column; justify-content:center; padding:28px 0 8px}
+.onb-step{display:none}
+.onb-step.active{display:block; animation:fadeUp .35s ease}
+@keyframes fadeUp{from{opacity:0; transform:translateY(10px)}to{opacity:1; transform:none}}
+.onb-kicker{font-size:13px; font-weight:700; letter-spacing:.04em; color:var(--accent); text-transform:uppercase}
+.onb h1{font-size:30px; line-height:1.3; margin:8px 0 6px; letter-spacing:-.015em}
+.onb p.lead{color:var(--muted); margin:0 0 22px; font-size:16.5px}
+.persona-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:14px}
+@media (max-width:560px){.persona-grid{grid-template-columns:1fr 1fr; gap:10px}}
+.persona-card{
+  border:1px solid var(--border); border-radius:var(--radius); background:var(--surface);
+  padding:16px 14px 14px; text-align:center; transition:transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.persona-card:hover{transform:translateY(-3px); border-color:var(--accent); box-shadow:var(--shadow)}
+.persona-card .mascot{height:118px; margin-bottom:8px}
+.persona-card h3{margin:2px 0; font-size:18px}
+.persona-card .role{font-size:12.5px; font-weight:700; color:var(--accent); margin-bottom:4px}
+.persona-card p{margin:0; font-size:13.5px; color:var(--muted); line-height:1.55}
+.country-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px}
+@media (max-width:560px){.country-grid{grid-template-columns:1fr}}
+.country-card{
+  border:1px solid var(--border); border-radius:var(--radius); background:var(--surface);
+  padding:20px 14px; text-align:center; transition:transform .15s ease, border-color .15s ease;
+}
+.country-card:hover{transform:translateY(-3px); border-color:var(--accent)}
+.country-card .flag{font-size:44px; line-height:1.1; display:block}
+.country-card h3{margin:8px 0 2px; font-size:17px}
+.country-card p{margin:0; font-size:13px; color:var(--muted)}
+.onb-actions{display:flex; gap:10px; margin-top:22px; flex-wrap:wrap}
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  padding:11px 20px; border-radius:13px; font-size:15px; font-weight:700;
+  border:1px solid var(--border); background:var(--surface); color:var(--text);
+  transition:transform .12s ease, background .12s ease;
+}
+.btn:hover{transform:translateY(-1px); background:var(--surface2)}
+.btn.primary{background:linear-gradient(135deg, var(--teal), var(--blue)); color:#fff; border-color:transparent}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent}
+.btn.small{padding:8px 14px; font-size:13.5px; border-radius:10px}
+.name-row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+.text-input{
+  flex:1; min-width:200px; padding:12px 14px; border-radius:13px;
+  border:1px solid var(--border); background:var(--input-bg); font-size:15px;
+}
+.text-input::placeholder{color:var(--muted2)}
+
+/* ============ chat ============ */
+#messages{flex:1; display:flex; flex-direction:column; gap:18px; padding:20px 0 8px; overflow:visible}
+.empty{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:30px 0 10px}
+.empty .mascot{height:170px; margin-bottom:6px}
+.empty h2{font-size:24px; margin:8px 0 4px; letter-spacing:-.01em}
+.empty p{color:var(--muted); margin:0 0 20px; max-width:560px}
+.chips{display:flex; flex-wrap:wrap; gap:9px; justify-content:center; max-width:640px}
+.chip{
+  padding:9px 15px; border-radius:999px; font-size:14px; font-weight:600;
+  border:1px solid var(--border); background:var(--surface); color:var(--text);
+  transition:border-color .15s ease, transform .12s ease;
+}
+.chip:hover{border-color:var(--accent); transform:translateY(-1px)}
+.msg{display:flex; gap:12px; align-items:flex-start; animation:fadeUp .3s ease}
+.msg .avatar{width:44px; height:56px; flex:none; margin-top:2px}
+.msg .avatar img{height:100%}
+.msg-user{flex-direction:row-reverse}
+.msg-body{flex:1; min-width:0; max-width:100%}
+.msg-name{font-size:12.5px; font-weight:700; color:var(--muted); margin-bottom:4px}
+.bubble{
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:13px 16px; line-height:1.7;
+  overflow-wrap:anywhere; word-break:break-word;
+}
+[dir="rtl"] .msg-assistant .bubble{border-top-right-radius:6px}
+[dir="ltr"] .msg-assistant .bubble{border-top-left-radius:6px}
+.msg-user .bubble{background:var(--user-bg); border-color:transparent; color:var(--user-text)}
+[dir="rtl"] .msg-user .bubble{border-top-left-radius:6px}
+[dir="ltr"] .msg-user .bubble{border-top-right-radius:6px}
+.bubble p{margin:0 0 8px}
+.bubble p:last-child{margin-bottom:0}
+.bubble code{
+  font-family:var(--mono); font-size:.88em; direction:ltr; unicode-bidi:embed;
+  background:var(--accent-bg); padding:1px 6px; border-radius:6px;
+}
+.follow-note{
+  display:inline-flex; gap:6px; align-items:center; font-size:12.5px; color:var(--muted);
+  background:var(--accent2-bg); border:1px solid var(--border); border-radius:999px;
+  padding:3px 10px; margin-bottom:8px;
+}
+/* thinking */
+.thinking{display:inline-flex; align-items:center; gap:3px; height:22px}
+.typing-dot{width:7px; height:7px; border-radius:50%; background:var(--accent); animation:tp 1.2s ease-in-out infinite}
+.typing-dot:nth-child(2){animation-delay:.15s}
+.typing-dot:nth-child(3){animation-delay:.3s}
+@keyframes tp{0%,60%,100%{transform:translateY(0); opacity:.5}30%{transform:translateY(-5px); opacity:1}}
+/* routing trace — the signature element */
+.trace{
+  margin-top:12px; border:1px dashed var(--border-strong); border-radius:var(--radius-sm);
+  background:var(--bg2); padding:10px 12px; font-size:13.5px;
+}
+.trace-head{font-size:12px; font-weight:700; letter-spacing:.03em; color:var(--muted); text-transform:uppercase; margin-bottom:6px}
+.trace-line{
+  display:flex; align-items:center; gap:8px; padding:4px 0; animation:fadeUp .3s ease;
+  overflow-wrap:anywhere;
+}
+.trace-line .st{width:9px; height:9px; border-radius:50%; flex:none}
+.trace-line .st.ok{background:var(--ok)}
+.trace-line .st.failed{background:var(--bad)}
+.trace-line .st.skipped{background:var(--warn)}
+.trace-line .st.run{background:var(--accent); animation:tp 1s ease-in-out infinite}
+.trace-line .srv{font-weight:700}
+.trace-line .tool{font-family:var(--mono); font-size:12.5px; color:var(--muted); direction:ltr; unicode-bidi:embed}
+.trace-line .ms{margin-inline-start:auto; font-size:12px; color:var(--muted2); font-family:var(--mono); flex:none}
+.trace-line.live{color:var(--accent); font-weight:600}
+/* sources */
+.sources{margin-top:12px; font-size:13.5px}
+.sources-head{font-size:12px; font-weight:700; letter-spacing:.03em; color:var(--muted); text-transform:uppercase; margin-bottom:5px}
+.sources a{display:inline-flex; gap:6px; align-items:center; margin:2px 14px 2px 0; overflow-wrap:anywhere}
+[dir="ltr"] .sources a{margin:2px 14px 2px 0}
+/* alternatives + disambiguation */
+.alt-row{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px}
+.alt-chip{
+  font-size:13px; font-weight:600; padding:7px 12px; border-radius:999px;
+  border:1px solid var(--border); background:var(--surface2); text-align:start;
+}
+.alt-chip:hover{border-color:var(--accent)}
+.alt-chip small{display:block; font-weight:500; color:var(--muted); font-size:11.5px}
+.disamb{margin-top:12px; background:var(--accent2-bg); border:1px solid var(--border); border-radius:var(--radius-sm); padding:11px 13px}
+.disamb p{margin:0 0 9px; font-size:14px; font-weight:600}
+.disamb-btns{display:flex; gap:9px; flex-wrap:wrap}
+.disamb-btn{
+  display:inline-flex; align-items:center; gap:8px; padding:9px 15px; border-radius:11px;
+  background:var(--surface); border:1px solid var(--border-strong); font-weight:700; font-size:14px;
+}
+.disamb-btn:hover{border-color:var(--accent)}
+/* rich cards */
+.cards{display:grid; gap:10px; margin-top:12px}
+.card{
+  border:1px solid var(--border); border-radius:var(--radius-sm);
+  background:var(--surface2); padding:12px 14px; overflow-wrap:anywhere;
+}
+.card h4{margin:0 0 4px; font-size:15px}
+.card .sub{font-size:13px; color:var(--muted); margin:0}
+.card .price{font-size:17px; font-weight:800; color:var(--accent)}
+.card-row{display:flex; justify-content:space-between; gap:12px; align-items:baseline; flex-wrap:wrap}
+.kv{display:grid; grid-template-columns:auto 1fr; gap:3px 14px; font-size:14px; margin-top:8px}
+.kv dt{color:var(--muted); font-weight:600}
+.kv dd{margin:0; overflow-wrap:anywhere}
+.rates{width:100%; border-collapse:collapse; font-size:14px; margin-top:8px}
+.rates th,.rates td{padding:6px 8px; text-align:start; border-bottom:1px solid var(--border)}
+.rates th{color:var(--muted); font-size:12.5px; text-transform:uppercase; letter-spacing:.03em}
+.news-item{padding:9px 0; border-bottom:1px solid var(--border)}
+.news-item:last-child{border-bottom:none}
+.news-item a{font-weight:700; color:var(--text)}
+.news-item a:hover{color:var(--accent)}
+.news-item .meta{font-size:12.5px; color:var(--muted)}
+details.raw{margin-top:12px; font-size:13px}
+details.raw summary{cursor:pointer; color:var(--muted); font-weight:600}
+details.raw pre{
+  direction:ltr; text-align:left; overflow:auto; max-height:320px;
+  background:var(--code-bg); color:#D8E8E0; padding:12px; border-radius:10px;
+  font-family:var(--mono); font-size:12.5px; line-height:1.5; margin:8px 0 0;
+}
+[data-theme="light"] details.raw pre{color:#D8E8E0}
+.badge{
+  display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:700;
+  padding:3px 9px; border-radius:999px; background:var(--accent2-bg); color:var(--accent2);
+  border:1px solid var(--border); vertical-align:middle;
+}
+.badge.sample{background:rgba(216,156,69,.16); color:var(--gold)}
+.sample-note{font-size:13px; color:var(--muted); border-inline-start:3px solid var(--gold); padding:2px 10px; margin:10px 0}
+.err-box{border:1px solid color-mix(in srgb, var(--bad) 45%, transparent); background:color-mix(in srgb, var(--bad) 9%, transparent); border-radius:var(--radius-sm); padding:11px 13px; font-size:14px; margin-top:8px}
+
+/* ============ composer ============ */
+.composer-wrap{position:sticky; bottom:0; padding:12px 0 4px; background:linear-gradient(transparent, var(--bg) 28%)}
+.composer{
+  display:flex; gap:9px; align-items:flex-end;
+  background:var(--surface); border:1px solid var(--border-strong); border-radius:20px;
+  padding:9px 9px 9px 12px; box-shadow:var(--shadow);
+}
+.composer textarea{
+  flex:1; border:none; outline:none; resize:none; background:transparent;
+  font-size:15.5px; line-height:1.6; max-height:150px; padding:8px 2px;
+}
+.composer textarea::placeholder{color:var(--muted2)}
+.send-btn{
+  width:42px; height:42px; border-radius:13px; flex:none;
+  background:linear-gradient(135deg, var(--teal), var(--blue)); color:#fff;
+  display:flex; align-items:center; justify-content:center; font-size:19px;
+}
+.send-btn:disabled{opacity:.45; cursor:default}
+.mic-btn{
+  width:42px; height:42px; border-radius:13px; flex:none; font-size:19px;
+  border:1px solid var(--border); background:var(--surface2);
+  display:flex; align-items:center; justify-content:center;
+}
+.mic-btn.listening{background:color-mix(in srgb, var(--bad) 20%, transparent); border-color:var(--bad); animation:tp 1s ease-in-out infinite}
+.composer-hint{text-align:center; font-size:12px; color:var(--muted2); padding:7px 0 2px}
+
+/* ============ setup card ============ */
+.setup{
+  border:1px solid var(--border-strong); border-radius:var(--radius); background:var(--surface);
+  padding:20px; margin:20px 0; box-shadow:var(--shadow);
+}
+.setup h3{margin:0 0 6px; font-size:19px}
+.setup p{margin:0 0 14px; color:var(--muted)}
+.setup ol{margin:0 0 16px; padding-inline-start:20px; line-height:1.9}
+.setup ol li::marker{font-weight:700; color:var(--accent)}
+.cmd{
+  display:flex; gap:8px; align-items:center; background:var(--code-bg); color:#D8E8E0;
+  border-radius:10px; padding:10px 12px; font-family:var(--mono); font-size:13px;
+  direction:ltr; text-align:left; overflow-x:auto; margin:6px 0;
+}
+.cmd code{flex:1; white-space:nowrap}
+.cmd button{
+  flex:none; font-size:12px; font-weight:700; color:#0B1210; background:var(--teal-bright);
+  padding:5px 10px; border-radius:7px;
+}
+.setup-actions{display:flex; gap:10px; flex-wrap:wrap}
+
+/* ============ settings ============ */
+.overlay{position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:80; display:none}
+.overlay.open{display:block}
+.panel{
+  position:fixed; top:0; bottom:0; inset-inline-end:0; width:min(420px, 94vw); z-index:90;
+  background:var(--surface); border-inline-start:1px solid var(--border);
+  transform:translateX(105%); transition:transform .25s ease;
+  display:flex; flex-direction:column; box-shadow:var(--shadow);
+}
+[dir="rtl"] .panel{transform:translateX(-105%)}
+.panel.open{transform:none}
+.panel-head{display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid var(--border)}
+.panel-head h2{margin:0; font-size:19px}
+.panel-body{flex:1; overflow-y:auto; padding:18px}
+.set-group{margin-bottom:22px}
+.set-group h3{font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin:0 0 10px}
+.mini-personas{display:grid; grid-template-columns:repeat(4,1fr); gap:8px}
+.mini-persona{border:1px solid var(--border); border-radius:12px; padding:8px 4px 6px; text-align:center; font-size:12px; font-weight:700}
+.mini-persona .mascot{height:56px; margin-bottom:2px}
+.mini-persona.sel{border-color:var(--accent); background:var(--accent-bg)}
+.mini-countries{display:flex; gap:8px; flex-wrap:wrap}
+.mini-country{
+  display:inline-flex; align-items:center; gap:7px; padding:8px 13px; border-radius:11px;
+  border:1px solid var(--border); font-weight:700; font-size:14px;
+}
+.mini-country.sel{border-color:var(--accent); background:var(--accent-bg)}
+.set-row{display:flex; gap:9px; align-items:center; margin-bottom:9px}
+.set-row label{flex:none; width:110px; font-size:13.5px; color:var(--muted); font-weight:600}
+.set-row .text-input{padding:9px 11px; font-size:14px}
+.danger{color:var(--bad); border-color:color-mix(in srgb, var(--bad) 45%, transparent)}
+.note{font-size:12.5px; color:var(--muted2); line-height:1.6; margin-top:6px}
+.popover{
+  position:absolute; top:56px; inset-inline-end:16px; z-index:70; min-width:230px;
+  background:var(--surface); border:1px solid var(--border-strong); border-radius:14px;
+  box-shadow:var(--shadow); padding:8px; display:none;
+}
+.popover.open{display:block}
+.popover button{display:flex; width:100%; gap:10px; align-items:center; padding:9px 10px; border-radius:9px; font-size:14.5px; font-weight:600; text-align:start}
+.popover button:hover{background:var(--surface2)}
+.popover button.sel{background:var(--accent-bg)}
+.toast{
+  position:fixed; bottom:92px; left:50%; z-index:120;
+  transform:translateX(-50%) translateY(16px);
+  background:var(--surface); border:1px solid var(--border-strong); border-radius:12px;
+  padding:11px 18px; font-weight:600; font-size:14.5px; box-shadow:var(--shadow);
+  opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease;
+  max-width:92vw; text-align:center;
+}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+@media (max-width:640px){
+  .onb h1{font-size:25px}
+  .empty .mascot{height:140px}
+  .msg .avatar{width:36px; height:46px}
+  .logo small{display:none}
+  .header-in{padding:9px 12px; gap:7px}
+  select.lang{max-width:76px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-in">
+    <a class="logo" href="#" onclick="return App.goHome(event)">
+      <span class="logo-mark">⚡</span>
+      <span>all-mcp<small data-i18n="tagline">یک MCP برای همه‌چیز</small></span>
+    </a>
+    <div class="header-spacer"></div>
+    <span class="pill offline" id="statusPill" title=""><span class="dot"></span><span id="statusText">…</span></span>
+    <button class="country-chip" id="countryChip" onclick="App.toggleCountryPopover(event)" title="">
+      <span class="flag" id="countryFlag">🌍</span><span id="countryCode">—</span>
+    </button>
+    <select class="lang" id="langSelect" onchange="App.setLang(this.value)" aria-label="Language">
+      <option value="fa">فارسی</option>
+      <option value="en">English</option>
+      <option value="de">Deutsch</option>
+      <option value="tr">Türkçe</option>
+    </select>
+    <button class="icon-btn" id="themeBtn" onclick="App.toggleTheme()" title="Theme">🌙</button>
+    <button class="icon-btn" onclick="App.openSettings()" title="Settings">⚙️</button>
+  </div>
+  <div class="popover" id="countryPopover"></div>
+</header>
+
+<main>
+  <!-- ================= ONBOARDING ================= -->
+  <section class="view" id="view-onboarding">
+    <div class="onb">
+      <div class="onb-step active" id="ob-step-1">
+        <div class="onb-kicker" data-i18n="ob1kicker">قدم ۱ از ۳ — هم‌صحبتت رو انتخاب کن</div>
+        <h1 data-i18n="ob1title">کی باهات حرف بزنه؟</h1>
+        <p class="lead" data-i18n="ob1lead">هر شخصیت لحن و حال‌وهوای خودش رو داره — مثل یه دوست که راهنماییت می‌کنه. هر وقت خواستی عوضش کن.</p>
+        <div class="persona-grid" id="personaGrid"></div>
+      </div>
+      <div class="onb-step" id="ob-step-2">
+        <div class="onb-kicker" data-i18n="ob2kicker">قدم ۲ از ۳ — کجا زندگی می‌کنی؟</div>
+        <h1 data-i18n="ob2title">کشورت رو انتخاب کن</h1>
+        <p class="lead" data-i18n="ob2lead">وقتی توی سؤالت اسم شهر نیست، چت سراغ سرویس‌های کشور خودت می‌ره. هر وقت خواستی از بالای صفحه عوضش کن.</p>
+        <div class="country-grid" id="countryGrid"></div>
+        <div class="onb-actions">
+          <button class="btn ghost" onclick="App.obBack(1)" data-i18n="back">← برگشت</button>
+          <button class="btn" onclick="App.pickCountry(null)" data-i18n="noCountry">فعلاً هیچ‌کدام</button>
+        </div>
+      </div>
+      <div class="onb-step" id="ob-step-3">
+        <div class="onb-kicker" data-i18n="ob3kicker">قدم ۳ از ۳ — تقریباً تمومه</div>
+        <h1 data-i18n="ob3title">اسمت چیه؟ <span style="font-weight:500;font-size:18px;color:var(--muted)" data-i18n="optional">(اختیاری)</span></h1>
+        <p class="lead" data-i18n="ob3lead">اسمت فقط توی مرورگر خودت می‌مونه — هیچ‌جا فرستاده نمی‌شه. چت باهاش صمیمی‌تر حرف می‌زنه.</p>
+        <div class="name-row">
+          <input class="text-input" id="nameInput" data-i18n-ph="namePh" placeholder="مثلاً محمد" maxlength="40">
+          <button class="btn primary" onclick="App.finishOnboarding()" data-i18n="startChat">شروع چت ←</button>
+        </div>
+        <div class="onb-actions">
+          <button class="btn ghost" onclick="App.obBack(2)" data-i18n="back">← برگشت</button>
+        </div>
+        <p class="note" data-i18n="ob3note">حافظهٔ چت (نام، کشور، زبان، تاریخچه) فقط در مرورگر تو ذخیره می‌شود — بدون حساب کاربری، بدون سرور.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CHAT ================= -->
+  <section class="view" id="view-chat">
+    <div class="setup" id="setupCard" style="display:none">
+      <h3 data-i18n="setupTitle">سرور محلی وصل نیست</h3>
+      <p data-i18n="setupLead">چت با سرور all-mcp روی خودِ کامپیوترت حرف می‌زنه — هیچ داده‌ای به سرور ما نمی‌رسه. برای راه‌انداختنش ۳۰ ثانیه کافیه:</p>
+      <ol>
+        <li><span data-i18n="setup1">نصب uv (یک بار):</span>
+          <div class="cmd"><code>curl -LsSf https://astral.sh/uv/install.sh | sh</code><button onclick="App.copyText('curl -LsSf https://astral.sh/uv/install.sh | sh', this)" data-i18n="copy">کپی</button></div>
+        </li>
+        <li><span data-i18n="setup2">سرور رو اجرا کن:</span>
+          <div class="cmd"><code>uvx all-mcp --http --port 8765</code><button onclick="App.copyText('uvx all-mcp --http --port 8765', this)" data-i18n="copy">کپی</button></div>
+        </li>
+        <li data-i18n="setup3">بعد دکمهٔ «بررسی دوباره» رو بزن — همین.</li>
+      </ol>
+      <p class="note" data-i18n="setupKey">نکته: برای جواب یک‌مرحله‌ای با هوش مصنوعی، یه کلید API (مثلاً GEMINI_API_KEY) رو توی محیط سرورت بذار — کلید هرگز از کامپیوترت بیرون نمی‌ره. بدون کلید هم چت کار می‌کنه.</p>
+      <div class="setup-actions">
+        <button class="btn primary" onclick="App.checkBridge(true)" data-i18n="recheck">بررسی دوباره</button>
+        <button class="btn" onclick="App.enterDemo()" data-i18n="tryDemo">امتحان بدون نصب — حالت نمایشی</button>
+      </div>
+    </div>
+
+    <div class="empty" id="emptyState">
+      <div class="mascot mascot-float mascot-blink" id="heroMascot">
+        <div class="mascot-video-slot"></div>
+        <img id="heroMascotImg" src="assets/mascot-finn-wave.webp" alt="Finn the fox">
+      </div>
+      <h2 id="greetingTitle">سلام! 👋</h2>
+      <p id="greetingSub"></p>
+      <div class="chips" id="sampleChips"></div>
+    </div>
+
+    <div id="messages"></div>
+
+    <div class="composer-wrap">
+      <div class="composer">
+        <button class="mic-btn" id="micBtn" onclick="App.toggleVoice()" title="Voice input">🎙️</button>
+        <textarea id="composerInput" rows="1" data-i18n-ph="askPh" placeholder="سؤالت رو بپرس…"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="App.send()" title="Send">➤</button>
+      </div>
+      <div class="composer-hint" data-i18n="composerHint">همه‌چیز روی کامپیوتر خودت اجرا می‌شه — بدون حساب، بدون ردیابی.</div>
+    </div>
+  </section>
+</main>
+
+<!-- ================= SETTINGS ================= -->
+<div class="overlay" id="overlay" onclick="App.closeSettings()"></div>
+<aside class="panel" id="settingsPanel" aria-label="Settings">
+  <div class="panel-head">
+    <h2 data-i18n="settings">تنظیمات</h2>
+    <button class="icon-btn" onclick="App.closeSettings()">✕</button>
+  </div>
+  <div class="panel-body">
+    <div class="set-group">
+      <h3 data-i18n="setPersona">شخصیت</h3>
+      <div class="mini-personas" id="miniPersonas"></div>
+    </div>
+    <div class="set-group">
+      <h3 data-i18n="setCountry">کشور</h3>
+      <div class="mini-countries" id="miniCountries"></div>
+    </div>
+    <div class="set-group">
+      <h3 data-i18n="setYou">تو</h3>
+      <div class="set-row"><label data-i18n="setName">نام</label><input class="text-input" id="setNameInput" maxlength="40"></div>
+      <div class="set-row"><label data-i18n="setLang">زبان</label>
+        <select class="text-input" id="setLangSelect" onchange="App.setLang(this.value)">
+          <option value="fa">فارسی</option><option value="en">English</option><option value="de">Deutsch</option><option value="tr">Türkçe</option>
+        </select>
+      </div>
+      <div class="set-row"><label data-i18n="setTheme">تم</label>
+        <select class="text-input" id="setThemeSelect" onchange="App.setTheme(this.value)">
+          <option value="dark">🌙 Dark</option><option value="light">☀️ Light</option>
+        </select>
+      </div>
+    </div>
+    <div class="set-group">
+      <h3 data-i18n="setBridge">پل محلی (سرور)</h3>
+      <div class="set-row"><label data-i18n="setEndpoint">آدرس</label><input class="text-input" id="setEndpointInput" placeholder="http://127.0.0.1:8765" style="direction:ltr;text-align:left"></div>
+      <p class="note" data-i18n="endpointNote">پیش‌فرض سرور روی خودِ کامپیوترته. همین فیلد بعداً می‌تونه به نسخهٔ هاست‌شده وصل بشه.</p>
+      <button class="btn small" onclick="App.saveEndpoint()" data-i18n="saveTest">ذخیره و تست اتصال</button>
+      <span id="endpointStatus" style="font-size:13px;color:var(--muted)"></span>
+    </div>
+    <div class="set-group">
+      <h3 data-i18n="setMemory">حافظه (توی مرورگر تو)</h3>
+      <p class="note" id="memoryStats" style="margin-top:0"></p>
+      <div style="display:flex;gap:9px;flex-wrap:wrap">
+        <button class="btn small" onclick="App.exportMemory()" data-i18n="exportMemory">دانلود حافظه (JSON)</button>
+        <button class="btn small danger" onclick="App.clearMemory()" data-i18n="clearMemory">پاک کردن همه‌چیز</button>
+      </div>
+      <p class="note" data-i18n="memoryNote">کلیدهای API هرگز اینجا ذخیره نمی‌شن — فقط توی محیط سرور محلی خودت زندگی می‌کنن.</p>
+    </div>
+    <div class="set-group">
+      <h3 data-i18n="setAbout">درباره</h3>
+      <p class="note" style="margin-top:0">all-mcp 0.1.0 — <span data-i18n="aboutLine">یک روتر محلی روی ۶۰ سرور و ۳۲۴ ابزار (ترکیه، آلمان، بن‌باما).</span><br>
+      <a href="https://github.com/mohammad-abbasi-sh/all-mcp" target="_blank" rel="noopener">GitHub</a> ·
+      <a href="https://pypi.org/project/all-mcp/" target="_blank" rel="noopener">PyPI</a></p>
+    </div>
+  </div>
+</aside>
+
+<footer class="foot">
+  <div class="foot-in">
+    <div data-i18n="privacyLine">🔒 همه‌چیز روی کامپیوتر خودت اجرا می‌شه؛ هیچ داده‌ای به سرور ما نمی‌رسه — فقط درخواست‌های خودت به سرویس‌هایی می‌رن که ازشون سؤال می‌کنی.</div>
+    <div class="foot-links">
+      <a href="https://mohammad-abbasi-sh.github.io/turkey-mcp/" target="_blank" rel="noopener">🇹🇷 Turkey MCP</a>
+      <a href="https://mohammad-abbasi-sh.github.io/germany-mcp/" target="_blank" rel="noopener">🇩🇪 Germany MCP</a>
+      <a href="https://github.com/mohammad-abbasi-sh/all-mcp" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://pypi.org/project/all-mcp/" target="_blank" rel="noopener">PyPI</a>
+      <a href="https://almanibama.ir" target="_blank" rel="noopener">almanibama.ir</a>
+      <a href="https://mabbasi.ir" target="_blank" rel="noopener">mabbasi.ir</a>
+    </div>
+  </div>
+</footer>
+<div class="toast" id="toast"></div>
+<script>
+"use strict";
+/* ================= all-mcp chat — no backend, no telemetry =================
+   State lives in localStorage only. Secrets (API keys) are NEVER stored here
+   and NEVER sent by this page — keys live in the local server's environment.
+   The bridge endpoint is a variable (settings): localhost now, a hosted URL
+   later (the monetization door). */
+const LS_KEY = "allmcp.chat.v1";
+const DEFAULT_ENDPOINT = "http://127.0.0.1:8765";
+const INDEX_RAW_URL = "https://raw.githubusercontent.com/mohammad-abbasi-sh/all-mcp/main/src/all_mcp/tools_index.json";
+
+/* ---- server display names, generated from the real tools_index.json ----
+   (60 servers; refreshed live from the repo when reachable) */
+const SERVER_MAP = {"tcmb-mcp":{"t":"Central Bank of Türkiye","c":"TR","cat":"finance"},"arabam-mcp":{"t":"arabam.com","c":"TR","cat":"cars"},"emlakjet-mcp":{"t":"emlakjet.com","c":"TR","cat":"real-estate"},"armut-mcp":{"t":"armut.com","c":"TR","cat":"services"},"hepsiburada-mcp":{"t":"hepsiburada.com","c":"TR","cat":"shopping"},"n11-mcp":{"t":"n11.com","c":"TR","cat":"shopping"},"ciceksepeti-mcp":{"t":"ciceksepeti.com","c":"TR","cat":"shopping"},"obilet-mcp":{"t":"obilet.com","c":"TR","cat":"travel"},"biletall-mcp":{"t":"biletall.com","c":"TR","cat":"travel"},"secretcv-mcp":{"t":"secretcv.com","c":"TR","cat":"jobs"},"biletix-mcp":{"t":"biletix.com","c":"TR","cat":"entertainment"},"sozcu-mcp":{"t":"sozcu.com.tr","c":"TR","cat":"news"},"eleman-net-mcp":{"t":"eleman.net","c":"TR","cat":"jobs"},"mackolik-mcp":{"t":"mackolik.com","c":"TR","cat":"sports"},"donanimhaber-mcp":{"t":"donanimhaber.com","c":"TR","cat":"news"},"yemek-com-mcp":{"t":"Yemek.com","c":"TR","cat":"food"},"hurriyet-mcp":{"t":"Hürriyet","c":"TR","cat":"news"},"sok-mcp":{"t":"ŞOK","c":"TR","cat":"grocery"},"jolly-tur-mcp":{"t":"Jolly Tur","c":"TR","cat":"travel"},"migros-mcp":{"t":"Migros Sanal Market","c":"TR","cat":"grocery"},"paribu-cineverse-mcp":{"t":"Paribu Cineverse","c":"TR","cat":"entertainment"},"trthaber-mcp":{"t":"TRT Haber","c":"TR","cat":"news"},"tff-mcp":{"t":"Turkish Football Federation","c":"TR","cat":"sports"},"bim-mcp":{"t":"bim.com.tr (BİM)","c":"TR","cat":"grocery"},"tabii-mcp":{"t":"tabii.com (TRT)","c":"TR","cat":"entertainment"},"eksisozluk-mcp":{"t":"eksisozluk.com (Ekşi Sözlük)","c":"TR","cat":"communication"},"iskur-mcp":{"t":"İŞKUR","c":"TR","cat":"jobs"},"beyazperde-mcp":{"t":"Beyazperde","c":"TR","cat":"entertainment"},"nefisyemektarifleri-mcp":{"t":"Nefis Yemek Tarifleri","c":"TR","cat":"food"},"paribu-mcp":{"t":"Paribu","c":"TR","cat":"finance"},"diyanet-mcp":{"t":"Diyanet","c":"TR","cat":"services"},"osym-mcp":{"t":"ÖSYM","c":"TR","cat":"services"},"bundesliga-mcp":{"t":"Bundesliga","c":"DE","cat":"sports"},"mediathek-mcp":{"t":"Mediathek","c":"DE","cat":"media"},"tagesschau-mcp":{"t":"tagesschau","c":"DE","cat":"news"},"dwd-mcp":{"t":"DWD","c":"DE","cat":"weather"},"autobahn-mcp":{"t":"Autobahn","c":"DE","cat":"transport"},"dw-mcp":{"t":"Deutsche Welle","c":"DE","cat":"news"},"ntv-mcp":{"t":"n-tv","c":"DE","cat":"news"},"dnb-mcp":{"t":"DNB","c":"DE","cat":"open-data"},"govdata-mcp":{"t":"GovData","c":"DE","cat":"open-data"},"deutschlandfunk-mcp":{"t":"Deutschlandfunk","c":"DE","cat":"news"},"duden-mcp":{"t":"Duden","c":"DE","cat":"language"},"dictcc-mcp":{"t":"dict.cc","c":"DE","cat":"language"},"bundeswahlleiter-mcp":{"t":"Bundeswahlleiterin","c":"DE","cat":"open-data"},"flixtrain-mcp":{"t":"FlixTrain","c":"DE","cat":"transport"},"billiger-mcp":{"t":"billiger.de","c":"DE","cat":"shopping"},"fernsehserien-mcp":{"t":"fernsehserien.de","c":"DE","cat":"media"},"zdf-mcp":{"t":"ZDF heute news","c":"DE","cat":"media"},"ecb-mcp":{"t":"ECB euro data","c":"DE","cat":"finance"},"wg-gesucht-mcp":{"t":"WG-Gesucht housing","c":"DE","cat":"housing"},"uba-mcp":{"t":"UBA","c":"DE","cat":"health"},"openplz-mcp":{"t":"OpenPLZ","c":"DE","cat":"open-data"},"feiertage-mcp":{"t":"Feiertage","c":"DE","cat":"open-data"},"ferien-mcp":{"t":"Ferien","c":"DE","cat":"open-data"},"spiegel-mcp":{"t":"Spiegel","c":"DE","cat":"news"},"heise-mcp":{"t":"Heise","c":"DE","cat":"news"},"zeit-mcp":{"t":"Zeit","c":"DE","cat":"news"},"welt-mcp":{"t":"Welt","c":"DE","cat":"news"},"bonbama-mcp":{"t":"Bonbama","c":"IR","cat":"discounts"}};
+
+const I18N = {
+fa: {dir:"rtl",
+ tagline:"یک MCP برای همه‌چیز",
+ ob1kicker:"قدم ۱ از ۳ — هم‌صحبتت رو انتخاب کن", ob1title:"کی باهات حرف بزنه؟",
+ ob1lead:"هر شخصیت لحن و حال‌وهوای خودش رو داره — مثل یه دوست که راهنماییت می‌کنه. هر وقت خواستی عوضش کن.",
+ ob2kicker:"قدم ۲ از ۳ — کجا زندگی می‌کنی؟", ob2title:"کشورت رو انتخاب کن",
+ ob2lead:"وقتی توی سؤالت اسم شهر نیست، چت سراغ سرویس‌های کشور خودت می‌ره. هر وقت خواستی از بالای صفحه عوضش کن.",
+ back:"← برگشت", noCountry:"فعلاً هیچ‌کدام",
+ ob3kicker:"قدم ۳ از ۳ — تقریباً تمومه", ob3title:"اسمت چیه؟", optional:"(اختیاری)",
+ ob3lead:"اسمت فقط توی مرورگر خودت می‌مونه — هیچ‌جا فرستاده نمی‌شه. چت باهاش صمیمی‌تر حرف می‌زنه.",
+ startChat:"شروع چت ←", namePh:"مثلاً محمد",
+ ob3note:"حافظهٔ چت (نام، کشور، زبان، تاریخچه) فقط در مرورگر تو ذخیره می‌شود — بدون حساب کاربری، بدون سرور.",
+ setupTitle:"سرور محلی وصل نیست",
+ setupLead:"چت با سرور all-mcp روی خودِ کامپیوترت حرف می‌زنه — هیچ داده‌ای به سرور ما نمی‌رسه. برای راه‌انداختنش ۳۰ ثانیه کافیه:",
+ setup1:"نصب uv (یک بار):", setup2:"سرور رو اجرا کن:", setup3:"بعد دکمهٔ «بررسی دوباره» رو بزن — همین.",
+ setupKey:"نکته: برای جواب یک‌مرحله‌ای با هوش مصنوعی، یه کلید API (مثلاً GEMINI_API_KEY) رو توی محیط سرورت بذار — کلید هرگز از کامپیوترت بیرون نمی‌ره. بدون کلید هم چت کار می‌کنه.",
+ copy:"کپی", copied:"کپی شد ✓", recheck:"بررسی دوباره", tryDemo:"امتحان بدون نصب — حالت نمایشی",
+ askPh:"سؤالت رو بپرس…", composerHint:"همه‌چیز روی کامپیوتر خودت اجرا می‌شه — بدون حساب، بدون ردیابی.",
+ settings:"تنظیمات", setPersona:"شخصیت", setCountry:"کشور", setYou:"تو", setName:"نام", setLang:"زبان",
+ setTheme:"تم", setBridge:"پل محلی (سرور)", setEndpoint:"آدرس",
+ endpointNote:"پیش‌فرض سرور روی خودِ کامپیوترته. همین فیلد بعداً می‌تونه به نسخهٔ هاست‌شده وصل بشه.",
+ saveTest:"ذخیره و تست اتصال", setMemory:"حافظه (توی مرورگر تو)",
+ exportMemory:"دانلود حافظه (JSON)", clearMemory:"پاک کردن همه‌چیز",
+ memoryNote:"کلیدهای API هرگز اینجا ذخیره نمی‌شن — فقط توی محیط سرور محلی خودت زندگی می‌کنن.",
+ setAbout:"درباره", aboutLine:"یک روتر محلی روی ۶۰ سرور و ۳۲۴ ابزار (ترکیه، آلمان، بن‌باما).",
+ privacyLine:"🔒 همه‌چیز روی کامپیوتر خودت اجرا می‌شه؛ هیچ داده‌ای به سرور ما نمی‌رسه — فقط درخواست‌های خودت به سرویس‌هایی می‌رن که ازشون سؤال می‌کنی.",
+ statusOnline:"متصل", statusOffline:"سرور خاموش", statusDemo:"نمایشی", statusChecking:"در حال بررسی…",
+ statusOnlineTitle:"پل محلی وصل است", statusOfflineTitle:"سرور محلی در حال اجرا نیست — راهنمای پایین صفحه",
+ samples:["قیمت بلیط قطار از برلین به مونیخ چقدره؟","اتوبوس استانبول به آنکارا","قیمت دلار امروز چنده؟","آخرین اخبار تاگس‌شاو"],
+ greetingSub:"از هرچی بپرس — قطار، پرواز، قیمت، خبر، تخفیف. خودم سرور درست رو پیدا می‌کنم و جواب می‌دم.",
+ thinking:"دارم فکر می‌کنم…", routing:"در حال پیدا کردن سرور مناسب…",
+ traceTitle:"ردپای مسیریابی", sourcesTitle:"منابع", alternativesTitle:"گزینه‌های دیگه",
+ disambTitle:"کدوم کشور رو می‌گی؟", disambHint:"سؤالت اسم شهر نداشت — یکی رو انتخاب کن:",
+ followupNote:"با توجه به سؤال قبلی",
+ needsArgs:"این ابزار به این اطلاعات نیاز داره:", needsArgsHint:"مقدارها رو توی سؤالت بگو، مثلاً «قطار برلین به مونیخ فردا».",
+ errorGeneric:"یه مشکلی پیش اومد. دوباره امتحان کن.", errorNoMatch:"هیچ ابزاری توی کاتالوگ برای این سؤال پیدا نشد.",
+ errorBridge:"به سرور محلی وصل نشدم. مطمئن شو `uvx all-mcp --http` در حال اجراست، بعد دوباره امتحان کن.",
+ errorNotOnPyPI:"سرور درست پیدا شد ولی پکیجش هنوز روی PyPI منتشر نشده، پس اجرا نمی‌شه.",
+ you:"تو", routeStep:"مسیریابی", answeredBy:"پاسخ از", searchFallbackNote:"بدون کلید هوش مصنوعی — بهترین نتیجهٔ جستجو اجرا شد.",
+ demoBadge:"نمونه", exitDemo:"خروج از حالت نمایشی", connectReal:"اتصال به سرور واقعی",
+ demoNote:"حالت نمایشی — بدون نصب، با جواب‌های نمونه.",
+ demoFallback:"توی حالت نمایشی فقط این سه سؤال اسکریپت شده‌ست — یکی رو انتخاب کن یا به سرور واقعی وصل شو.",
+ tryOne:"یکی از این‌ها رو امتحان کن:", sampleLabel:"دادهٔ نمونه — واقعی نیست",
+ trainSampleNote:"پاسخ واقعی ثبت‌شده در تست ۱۸ نوامبر ۲۰۲۶ (۳ قطار برلین ← مونیخ، از ۴۶٫۴۸ یورو) — قیمت زنده نیست.",
+ saved:"ذخیره شد ✓", cleared:"حافظه پاک شد.", confirmClear:"همهٔ تاریخچه و تنظیمات پاک بشه؟",
+ voiceUnsupported:"مرورگرت ورودی صوتی رو پشتیبانی نمی‌کنه.", listening:"دارم گوش می‌دم… حرف بزن",
+ msgsCount:"پیام در تاریخچه", memoryEmpty:"تاریخچه خالی است.", noBridgeAsk:"اول سرور محلی رو روشن کن یا حالت نمایشی رو امتحان کن.",
+ endpointSaved:"آدرس ذخیره شد — در حال تست…", endpointOk:"وصل شد ✓", endpointFail:"وصل نشد — آدرس رو چک کن.",
+ anyCountry:"هر کشوری", countries:{TR:"ترکیه",DE:"آلمان",IR:"ایران"},
+ countryHint:{TR:"سرویس‌های ترکیه",DE:"سرویس‌های آلمان",IR:"بن‌باما — گرگان"},
+ ask:"بپرس", close:"بستن", details:"جزئیات خام", retry:"تلاش دوباره"
+},
+en: {dir:"ltr",
+ tagline:"One MCP for everything",
+ ob1kicker:"Step 1 of 3 — pick your companion", ob1title:"Who should talk to you?",
+ ob1lead:"Every character has its own vibe and tone — like a friend guiding you. Change it anytime.",
+ ob2kicker:"Step 2 of 3 — where do you live?", ob2title:"Pick your country",
+ ob2lead:"When your question names no city, the chat goes to your own country's services. Switch anytime from the top bar.",
+ back:"← Back", noCountry:"None for now",
+ ob3kicker:"Step 3 of 3 — almost done", ob3title:"What's your name?", optional:"(optional)",
+ ob3lead:"Your name stays in your browser only — it is never sent anywhere. The chat talks to you more personally with it.",
+ startChat:"Start chatting →", namePh:"e.g. Mohammad",
+ ob3note:"Chat memory (name, country, language, history) is stored in your browser only — no account, no server.",
+ setupTitle:"Local server is not connected",
+ setupLead:"The chat talks to the all-mcp server on your own computer — no data ever reaches our server. Setup takes 30 seconds:",
+ setup1:"Install uv (once):", setup2:"Run the server:", setup3:"Then hit “Check again” — that's it.",
+ setupKey:"Tip: for one-step AI answers, put an API key (e.g. GEMINI_API_KEY) in your server's environment — the key never leaves your machine. The chat works without a key too.",
+ copy:"Copy", copied:"Copied ✓", recheck:"Check again", tryDemo:"Try without installing — demo mode",
+ askPh:"Ask anything…", composerHint:"Everything runs on your own computer — no account, no tracking.",
+ settings:"Settings", setPersona:"Persona", setCountry:"Country", setYou:"You", setName:"Name", setLang:"Language",
+ setTheme:"Theme", setBridge:"Local bridge (server)", setEndpoint:"Address",
+ endpointNote:"By default this is the server on your own computer. This same field can later point at a hosted version.",
+ saveTest:"Save & test connection", setMemory:"Memory (in your browser)",
+ exportMemory:"Download memory (JSON)", clearMemory:"Clear everything",
+ memoryNote:"API keys are never stored here — they live only in your local server's environment.",
+ setAbout:"About", aboutLine:"A local router over 60 servers and 324 tools (Turkey, Germany, Bonbama).",
+ privacyLine:"🔒 Everything runs on your own computer; no data reaches our server — only your own requests go to the services you ask about.",
+ statusOnline:"Connected", statusOffline:"Server off", statusDemo:"Demo", statusChecking:"Checking…",
+ statusOnlineTitle:"Local bridge connected", statusOfflineTitle:"Local server is not running — see the guide below",
+ samples:["How much is a train ticket from Berlin to Munich?","Bus from Istanbul to Ankara","Dollar exchange rate today","Latest Tagesschau news"],
+ greetingSub:"Ask about anything — trains, flights, prices, news, discounts. I'll find the right server and answer.",
+ thinking:"Thinking…", routing:"Finding the right server…",
+ traceTitle:"Routing trace", sourcesTitle:"Sources", alternativesTitle:"Other options",
+ disambTitle:"Which country do you mean?", disambHint:"Your question named no city — pick one:",
+ followupNote:"Following up on",
+ needsArgs:"This tool needs:", needsArgsHint:"Include the values in your question, e.g. “train Berlin to Munich tomorrow”.",
+ errorGeneric:"Something went wrong. Try again.", errorNoMatch:"No tool in the catalog matches this question.",
+ errorBridge:"I couldn't reach the local server. Make sure `uvx all-mcp --http` is running, then try again.",
+ errorNotOnPyPI:"The right server was found, but its package isn't published on PyPI yet, so it can't run.",
+ you:"You", routeStep:"Routing", answeredBy:"Answered by", searchFallbackNote:"No AI key — the top search result was executed.",
+ demoBadge:"Sample", exitDemo:"Exit demo mode", connectReal:"Connect to the real server",
+ demoNote:"Demo mode — no install, sample answers.",
+ demoFallback:"Demo mode only has these three scripted questions — pick one, or connect to the real server.",
+ tryOne:"Try one of these:", sampleLabel:"Sample data — not live",
+ trainSampleNote:"Real answer recorded in the 18 Nov 2026 smoke test (3 trains Berlin → Munich, from €46.48) — not a live price.",
+ saved:"Saved ✓", cleared:"Memory cleared.", confirmClear:"Clear all history and settings?",
+ voiceUnsupported:"Your browser doesn't support voice input.", listening:"Listening… speak now",
+ msgsCount:"messages in history", memoryEmpty:"History is empty.", noBridgeAsk:"Start the local server first, or try demo mode.",
+ endpointSaved:"Address saved — testing…", endpointOk:"Connected ✓", endpointFail:"Couldn't connect — check the address.",
+ anyCountry:"Any country", countries:{TR:"Turkey",DE:"Germany",IR:"Iran"},
+ countryHint:{TR:"Turkish services",DE:"German services",IR:"Bonbama — Gorgan"},
+ ask:"Ask", close:"Close", details:"Raw details", retry:"Retry"
+},
+de: {dir:"ltr",
+ tagline:"Ein MCP für alles",
+ ob1kicker:"Schritt 1 von 3 — wähle deinen Begleiter", ob1title:"Wer soll mit dir sprechen?",
+ ob1lead:"Jeder Charakter hat seine eigene Art — wie ein Freund, der dich begleitet. Jederzeit wechselbar.",
+ ob2kicker:"Schritt 2 von 3 — wo wohnst du?", ob2title:"Wähle dein Land",
+ ob2lead:"Wenn deine Frage keine Stadt nennt, nutzt der Chat die Dienste deines Landes. Oben jederzeit wechselbar.",
+ back:"← Zurück", noCountry:"Erst mal keins",
+ ob3kicker:"Schritt 3 von 3 — fast fertig", ob3title:"Wie heißt du?", optional:"(optional)",
+ ob3lead:"Dein Name bleibt nur in deinem Browser — er wird nirgends hingeschickt. Der Chat spricht dich persönlicher an.",
+ startChat:"Chat starten →", namePh:"z. B. Mohammad",
+ ob3note:"Chat-Gedächtnis (Name, Land, Sprache, Verlauf) liegt nur in deinem Browser — kein Konto, kein Server.",
+ setupTitle:"Lokaler Server nicht verbunden",
+ setupLead:"Der Chat spricht mit dem all-mcp-Server auf deinem eigenen Computer — keine Daten erreichen unseren Server. Einrichtung dauert 30 Sekunden:",
+ setup1:"uv installieren (einmal):", setup2:"Server starten:", setup3:"Dann auf „Erneut prüfen“ klicken — fertig.",
+ setupKey:"Tipp: Für einstufige KI-Antworten lege einen API-Key (z. B. GEMINI_API_KEY) in die Umgebung deines Servers — der Key verlässt deinen Computer nie. Ohne Key funktioniert der Chat auch.",
+ copy:"Kopieren", copied:"Kopiert ✓", recheck:"Erneut prüfen", tryDemo:"Ohne Installation testen — Demo-Modus",
+ askPh:"Frag irgendwas…", composerHint:"Alles läuft auf deinem eigenen Computer — kein Konto, kein Tracking.",
+ settings:"Einstellungen", setPersona:"Persona", setCountry:"Land", setYou:"Du", setName:"Name", setLang:"Sprache",
+ setTheme:"Design", setBridge:"Lokale Brücke (Server)", setEndpoint:"Adresse",
+ endpointNote:"Standard ist der Server auf deinem eigenen Computer. Dasselbe Feld kann später auf eine gehostete Version zeigen.",
+ saveTest:"Speichern & Verbindung testen", setMemory:"Gedächtnis (in deinem Browser)",
+ exportMemory:"Gedächtnis laden (JSON)", clearMemory:"Alles löschen",
+ memoryNote:"API-Keys werden hier nie gespeichert — sie leben nur in der Umgebung deines lokalen Servers.",
+ setAbout:"Über", aboutLine:"Ein lokaler Router über 60 Server und 324 Tools (Türkei, Deutschland, Bonbama).",
+ privacyLine:"🔒 Alles läuft auf deinem eigenen Computer; keine Daten erreichen unseren Server — nur deine eigenen Anfragen gehen an die Dienste, nach denen du fragst.",
+ statusOnline:"Verbunden", statusOffline:"Server aus", statusDemo:"Demo", statusChecking:"Prüfe…",
+ statusOnlineTitle:"Lokale Brücke verbunden", statusOfflineTitle:"Lokaler Server läuft nicht — siehe Anleitung unten",
+ samples:["Was kostet ein Zugticket von Berlin nach München?","Bus von Istanbul nach Ankara","Dollar-Wechselkurs heute","Neueste Tagesschau-Nachrichten"],
+ greetingSub:"Frag nach allem — Züge, Flüge, Preise, Nachrichten, Rabatte. Ich finde den richtigen Server und antworte.",
+ thinking:"Denke nach…", routing:"Suche den richtigen Server…",
+ traceTitle:"Routing-Verlauf", sourcesTitle:"Quellen", alternativesTitle:"Andere Optionen",
+ disambTitle:"Welches Land meinst du?", disambHint:"Deine Frage nennt keine Stadt — wähle eins:",
+ followupNote:"Anknüpfend an",
+ needsArgs:"Dieses Tool braucht:", needsArgsHint:"Gib die Werte in deiner Frage an, z. B. „Zug Berlin nach München morgen“.",
+ errorGeneric:"Etwas ist schiefgelaufen. Versuch es erneut.", errorNoMatch:"Kein Tool im Katalog passt zu dieser Frage.",
+ errorBridge:"Lokaler Server nicht erreichbar. Stelle sicher, dass `uvx all-mcp --http` läuft, und versuch es erneut.",
+ errorNotOnPyPI:"Der richtige Server wurde gefunden, aber sein Paket ist noch nicht auf PyPI veröffentlicht.",
+ you:"Du", routeStep:"Routing", answeredBy:"Beantwortet von", searchFallbackNote:"Kein KI-Key — das beste Suchergebnis wurde ausgeführt.",
+ demoBadge:"Beispiel", exitDemo:"Demo-Modus beenden", connectReal:"Mit dem echten Server verbinden",
+ demoNote:"Demo-Modus — ohne Installation, mit Beispielantworten.",
+ demoFallback:"Der Demo-Modus kennt nur diese drei Fragen — wähle eine oder verbinde dich mit dem echten Server.",
+ tryOne:"Probiere eine davon:", sampleLabel:"Beispieldaten — nicht live",
+ trainSampleNote:"Echte Antwort aus dem Smoke-Test vom 18. Nov. 2026 (3 Züge Berlin → München, ab 46,48 €) — kein Live-Preis.",
+ saved:"Gespeichert ✓", cleared:"Gedächtnis gelöscht.", confirmClear:"Verlauf und Einstellungen wirklich löschen?",
+ voiceUnsupported:"Dein Browser unterstützt keine Spracheingabe.", listening:"Höre zu… sprich jetzt",
+ msgsCount:"Nachrichten im Verlauf", memoryEmpty:"Verlauf ist leer.", noBridgeAsk:"Starte zuerst den lokalen Server oder probiere den Demo-Modus.",
+ endpointSaved:"Adresse gespeichert — teste…", endpointOk:"Verbunden ✓", endpointFail:"Keine Verbindung — Adresse prüfen.",
+ anyCountry:"Jedes Land", countries:{TR:"Türkei",DE:"Deutschland",IR:"Iran"},
+ countryHint:{TR:"Türkische Dienste",DE:"Deutsche Dienste",IR:"Bonbama — Gorgan"},
+ ask:"Fragen", close:"Schließen", details:"Rohdaten", retry:"Erneut versuchen"
+},
+tr: {dir:"ltr",
+ tagline:"Her şey için tek MCP",
+ ob1kicker:"Adım 1/3 — arkadaşını seç", ob1title:"Seninle kim konuşsun?",
+ ob1lead:"Her karakterin kendi tarzı var — sana yol gösteren bir arkadaş gibi. İstediğin zaman değiştirebilirsin.",
+ ob2kicker:"Adım 2/3 — nerede yaşıyorsun?", ob2title:"Ülkeni seç",
+ ob2lead:"Sorunda şehir adı yoksa sohbet kendi ülkenin servislerine gider. Üst çubuktan her zaman değiştirebilirsin.",
+ back:"← Geri", noCountry:"Şimdilik hiçbiri",
+ ob3kicker:"Adım 3/3 — neredeyse bitti", ob3title:"Adın ne?", optional:"(isteğe bağlı)",
+ ob3lead:"Adın yalnızca tarayıcında kalır — hiçbir yere gönderilmez. Sohbet seninle daha samimi konuşur.",
+ startChat:"Sohbete başla →", namePh:"örn. Mohammad",
+ ob3note:"Sohbet hafızası (ad, ülke, dil, geçmiş) yalnızca tarayıcında saklanır — hesap yok, sunucu yok.",
+ setupTitle:"Yerel sunucu bağlı değil",
+ setupLead:"Sohbet, kendi bilgisayarındaki all-mcp sunucusuyla konuşur — hiçbir veri sunucumuza ulaşmaz. Kurulum 30 saniye sürer:",
+ setup1:"uv kur (bir kez):", setup2:"Sunucuyu çalıştır:", setup3:"Sonra “Tekrar denetle”ye bas — bu kadar.",
+ setupKey:"İpucu: Tek adımlı yapay zekâ yanıtları için bir API anahtarı (örn. GEMINI_API_KEY) sunucunun ortamına ekle — anahtar bilgisayarından asla çıkmaz. Anahtarsız da çalışır.",
+ copy:"Kopyala", copied:"Kopyalandı ✓", recheck:"Tekrar denetle", tryDemo:"Kurulum yapmadan dene — demo modu",
+ askPh:"Bir şey sor…", composerHint:"Her şey kendi bilgisayarında çalışır — hesap yok, izleme yok.",
+ settings:"Ayarlar", setPersona:"Karakter", setCountry:"Ülke", setYou:"Sen", setName:"Ad", setLang:"Dil",
+ setTheme:"Tema", setBridge:"Yerel köprü (sunucu)", setEndpoint:"Adres",
+ endpointNote:"Varsayılan, kendi bilgisayarındaki sunucudur. Aynı alan daha sonra barındırılan sürüme de bakabilir.",
+ saveTest:"Kaydet ve bağlantıyı test et", setMemory:"Hafıza (tarayıcında)",
+ exportMemory:"Hafızayı indir (JSON)", clearMemory:"Her şeyi sil",
+ memoryNote:"API anahtarları burada asla saklanmaz — yalnızca yerel sunucunun ortamında yaşar.",
+ setAbout:"Hakkında", aboutLine:"60 sunucu ve 324 araç üzerinde yerel bir yönlendirici (Türkiye, Almanya, Bonbama).",
+ privacyLine:"🔒 Her şey kendi bilgisayarında çalışır; hiçbir veri sunucumuza ulaşmaz — yalnızca kendi isteklerin sorduğun servislere gider.",
+ statusOnline:"Bağlı", statusOffline:"Sunucu kapalı", statusDemo:"Demo", statusChecking:"Denetleniyor…",
+ statusOnlineTitle:"Yerel köprü bağlı", statusOfflineTitle:"Yerel sunucu çalışmıyor — aşağıdaki kılavuza bak",
+ samples:["Berlin'den Münih'e tren bileti ne kadar?","İstanbul'dan Ankara'ya otobüs","Bugün dolar kuru ne kadar?","Son Tagesschau haberleri"],
+ greetingSub:"Her şeyi sor — tren, uçuş, fiyat, haber, indirim. Doğru sunucuyu bulup cevap veririm.",
+ thinking:"Düşünüyorum…", routing:"Doğru sunucu aranıyor…",
+ traceTitle:"Yönlendirme izi", sourcesTitle:"Kaynaklar", alternativesTitle:"Diğer seçenekler",
+ disambTitle:"Hangi ülkeyi kastediyorsun?", disambHint:"Sorunda şehir adı yok — birini seç:",
+ followupNote:"Şuna istinaden",
+ needsArgs:"Bu araç şunları istiyor:", needsArgsHint:"Değerleri soruna ekle, örn. “yarın Berlin'den Münih'e tren”.",
+ errorGeneric:"Bir şeyler ters gitti. Tekrar dene.", errorNoMatch:"Katalogda bu soruya uyan araç yok.",
+ errorBridge:"Yerel sunucuya ulaşamadım. `uvx all-mcp --http` çalıştığından emin ol, sonra tekrar dene.",
+ errorNotOnPyPI:"Doğru sunucu bulundu ama paketi henüz PyPI'de yayımlanmadı.",
+ you:"Sen", routeStep:"Yönlendirme", answeredBy:"Cevaplayan", searchFallbackNote:"Yapay zekâ anahtarı yok — en iyi arama sonucu çalıştırıldı.",
+ demoBadge:"Örnek", exitDemo:"Demo modundan çık", connectReal:"Gerçek sunucuya bağlan",
+ demoNote:"Demo modu — kurulum yok, örnek cevaplar.",
+ demoFallback:"Demo modunda yalnızca bu üç soru var — birini seç ya da gerçek sunucuya bağlan.",
+ tryOne:"Bunlardan birini dene:", sampleLabel:"Örnek veri — canlı değil",
+ trainSampleNote:"18 Kasım 2026 duman testinde kaydedilen gerçek cevap (3 tren Berlin → Münih, 46,48 €'den başlayan) — canlı fiyat değil.",
+ saved:"Kaydedildi ✓", cleared:"Hafıza temizlendi.", confirmClear:"Tüm geçmiş ve ayarlar silinsin mi?",
+ voiceUnsupported:"Tarayıcın ses girişini desteklemiyor.", listening:"Dinliyorum… konuş",
+ msgsCount:"geçmişte mesaj", memoryEmpty:"Geçmiş boş.", noBridgeAsk:"Önce yerel sunucuyu başlat ya da demo modunu dene.",
+ endpointSaved:"Adres kaydedildi — test ediliyor…", endpointOk:"Bağlandı ✓", endpointFail:"Bağlanılamadı — adresi kontrol et.",
+ anyCountry:"Herhangi bir ülke", countries:{TR:"Türkiye",DE:"Almanya",IR:"İran"},
+ countryHint:{TR:"Türkiye servisleri",DE:"Almanya servisleri",IR:"Bonbama — Gorgan"},
+ ask:"Sor", close:"Kapat", details:"Ham detay", retry:"Tekrar dene"
+}};
+
+const PERSONAS = {
+ finn:{emoji:"🦊", name:{fa:"فین",en:"Finn",de:"Finn",tr:"Finn"},
+  role:{fa:"راهنما",en:"The Guide",de:"Der Guide",tr:"Rehber"},
+  vibe:{fa:"گرم و کنجکاو — راهنمای تو بین ۶۰ سرویس",en:"Warm and curious — your guide across 60 services",de:"Warm und neugierig — dein Guide durch 60 Dienste",tr:"Sıcak ve meraklı — 60 serviste rehberin"},
+  greet:{fa:"سلام! من فینم 🦊 از هرچی بپرس، راهنماییت می‌کنم.",en:"Hi! I'm Finn 🦊 Ask me anything — I'll guide you.",de:"Hallo! Ich bin Finn 🦊 Frag mich alles — ich führe dich.",tr:"Merhaba! Ben Finn 🦊 Her şeyi sor — sana yol göstereyim."},
+  img:{neutral:"assets/mascot-finn-neutral.webp",greet:"assets/mascot-finn-wave.webp",think:"assets/mascot-finn-think.webp",happy:"assets/mascot-finn-happy.webp",celebrate:"assets/mascot-finn-celebrate.webp"}},
+ lupo:{emoji:"🐰", name:{fa:"لوپو",en:"Lupo",de:"Lupo",tr:"Lupo"},
+  role:{fa:"کاوشگر",en:"The Explorer",de:"Der Entdecker",tr:"Kâşif"},
+  vibe:{fa:"پر انرژی و عاشق سفر — همیشه دنبال چیزای تازه‌ست",en:"Energetic and travel-loving — always hunting for something new",de:"Energiegeladen und reiselustig — immer auf der Suche nach Neuem",tr:"Enerjik ve seyahat tutkunu — hep yeni şeyler peşinde"},
+  greet:{fa:"سلام! من لوپوام 🐰 بزن بریم بگردیم و پیدا کنیم!",en:"Hi! I'm Lupo 🐰 Let's go explore and find things!",de:"Hallo! Ich bin Lupo 🐰 Lass uns losziehen und entdecken!",tr:"Merhaba! Ben Lupo 🐰 Hadi gezelim ve bulalım!"},
+  img:{neutral:"assets/mascot-lupo-neutral.webp",greet:"assets/mascot-lupo-welcome.webp",think:"assets/mascot-lupo-think.webp",happy:"assets/mascot-lupo-encourage.webp",celebrate:"assets/mascot-lupo-celebrate.webp"}},
+ drago:{emoji:"🐉", name:{fa:"دراگو",en:"Drago",de:"Drago",tr:"Drago"},
+  role:{fa:"توضیح‌دهنده",en:"The Explainer",de:"Der Erklärer",tr:"Anlatıcı"},
+  vibe:{fa:"آروم و دقیق — عاشق اینه که همه‌چیز رو کامل توضیح بده",en:"Calm and thorough — loves explaining everything properly",de:"Ruhig und gründlich — erklärt alles gern ganz genau",tr:"Sakin ve titiz — her şeyi en ince ayrıntısına kadar anlatmayı sever"},
+  greet:{fa:"سلام! من دراگوم 🐉 بپرس، با حوصله و کامل جواب می‌دم.",en:"Hello! I'm Drago 🐉 Ask away — I'll answer patiently and fully.",de:"Hallo! Ich bin Drago 🐉 Frag ruhig — ich antworte geduldig und vollständig.",tr:"Merhaba! Ben Drago 🐉 Sor — sabırla ve eksiksiz cevap vereyim."},
+  img:{neutral:"assets/mascot-drago-neutral.webp",greet:"assets/mascot-drago-welcome.webp",think:"assets/mascot-drago-think.webp",happy:"assets/mascot-drago-encourage.webp",celebrate:"assets/mascot-drago-celebrate.webp"}},
+ fritz:{emoji:"🐸", name:{fa:"فریتز",en:"Fritz",de:"Fritz",tr:"Fritz"},
+  role:{fa:"بازیگوش",en:"The Playful One",de:"Der Verspielte",tr:"Oyuncu"},
+  vibe:{fa:"شوخ و سبک — حتی جواب جدی رو با لبخند می‌ده",en:"Cheeky and light — even serious answers come with a smile",de:"Frech und leicht — selbst ernste Antworten kommen mit einem Lächeln",tr:"Yaramaz ve neşeli — ciddi cevapları bile gülümseyerek verir"},
+  greet:{fa:"سلام! من فریتزم 🐸 کلاهمو گذاشتم و آماده‌م!",en:"Hi! I'm Fritz 🐸 Top hat on, ready to go!",de:"Hallo! Ich bin Fritz 🐸 Zylinder auf, ich bin bereit!",tr:"Merhaba! Ben Fritz 🐸 Silindir şapkam takılı, hazırım!"},
+  img:{neutral:"assets/mascot-fritz-neutral.webp",greet:"assets/mascot-fritz-welcome.webp",think:"assets/mascot-fritz-think.webp",happy:"assets/mascot-fritz-idea.webp",celebrate:"assets/mascot-fritz-celebrate.webp"}}
+};
+
+const COUNTRIES = [
+ {code:"TR", flag:"🇹🇷", servers:32},
+ {code:"DE", flag:"🇩🇪", servers:27},
+ {code:"IR", flag:"🇮🇷", servers:1}
+];
+const COUNTRY_FLAG = {TR:"🇹🇷", DE:"🇩🇪", IR:"🇮🇷"};
+
+/* ================= state ================= */
+const DEFAULTS = {persona:"finn", country:"TR", city:"", name:"", lang:"fa", theme:"dark",
+  endpoint:DEFAULT_ENDPOINT, onboarded:false, history:[], favorites:[]};
+let S = loadState();
+let DEMO = new URLSearchParams(location.search).get("demo") === "1";
+let bridge = {online:false, health:null, checking:false};
+let lastContext = null;   // {question, server, tool} — for follow-ups
+let sending = false;
+let recog = null, listening = false;
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return {...DEFAULTS};
+    const p = JSON.parse(raw);
+    return {...DEFAULTS, ...p, history:Array.isArray(p.history)?p.history:[]};
+  }catch(e){ return {...DEFAULTS}; }
+}
+function saveState(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify({...S, history:S.history.slice(-50)})); }catch(e){}
+}
+const t = (k) => (I18N[S.lang] && I18N[S.lang][k] !== undefined) ? I18N[S.lang][k] : (I18N.en[k] ?? k);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const persona = () => PERSONAS[S.persona] || PERSONAS.finn;
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+function serverName(id){
+  if(!id) return "";
+  if(id === "all-mcp") return "all-mcp";
+  const e = SERVER_MAP[id];
+  if(e) return e.t;
+  return id.replace(/-mcp$/, "").replace(/-/g, " ");
+}
+function serverCountry(id){ const e = SERVER_MAP[id]; return e ? e.c : null; }
+function serverCategory(id){ const e = SERVER_MAP[id]; return e ? e.cat : null; }
+
+/* Refresh the display map from the live repo index (best-effort; the
+   embedded snapshot stays as fallback, so the page never depends on it). */
+async function refreshServerMap(){
+  try{
+    const r = await fetch(INDEX_RAW_URL, {cache:"no-store"});
+    if(!r.ok) return;
+    const d = await r.json();
+    (d.servers || []).forEach(s => {
+      SERVER_MAP[s.id] = {t:(s.title || s.id).split(" — ")[0].split(" - ")[0], c:s.country, cat:s.category};
+    });
+  }catch(e){ /* offline — embedded map stands */ }
+}
+
+/* ================= bridge ================= */
+function endpoint(){ return (S.endpoint || DEFAULT_ENDPOINT).replace(/\/+$/, ""); }
+async function bridgeGet(path, timeoutMs){
+  const c = new AbortController();
+  const to = setTimeout(() => c.abort(), timeoutMs || 8000);
+  try{
+    const r = await fetch(endpoint() + path, {signal:c.signal, cache:"no-store"});
+    const j = await r.json().catch(() => ({}));
+    if(!r.ok) throw new Error(j.error || ("HTTP " + r.status));
+    return j;
+  } finally { clearTimeout(to); }
+}
+async function bridgePost(path, body, timeoutMs){
+  const c = new AbortController();
+  const to = setTimeout(() => c.abort(), timeoutMs || 120000);
+  try{
+    const r = await fetch(endpoint() + path, {method:"POST",
+      headers:{"Content-Type":"application/json"}, body:JSON.stringify(body), signal:c.signal});
+    const j = await r.json().catch(() => ({}));
+    if(!r.ok) throw new Error(j.error || ("HTTP " + r.status));
+    return j;
+  } finally { clearTimeout(to); }
+}
+async function checkBridge(showCard){
+  if(DEMO){ setStatus("demo"); return; }
+  if(bridge.checking) return;
+  bridge.checking = true; setStatus("checking");
+  try{
+    const h = await bridgeGet("/api/health", 3000);
+    bridge.online = true; bridge.health = h; setStatus("online");
+    document.getElementById("setupCard").style.display = "none";
+  }catch(e){
+    bridge.online = false; bridge.health = null; setStatus("offline");
+    if(showCard !== false) document.getElementById("setupCard").style.display = "block";
+  } finally { bridge.checking = false; }
+}
+function setStatus(kind){
+  const pill = document.getElementById("statusPill");
+  const txt = document.getElementById("statusText");
+  pill.className = "pill " + (kind === "online" ? "online" : kind === "demo" ? "demo" : kind === "checking" ? "" : "offline");
+  txt.textContent = kind === "online" ? t("statusOnline") + (bridge.health ? ` · ${bridge.health.servers}/${bridge.health.tools}` : "")
+    : kind === "demo" ? t("statusDemo")
+    : kind === "checking" ? t("statusChecking") : t("statusOffline");
+  pill.title = kind === "online" ? t("statusOnlineTitle") : kind === "offline" ? t("statusOfflineTitle") : "";
+}
+
+/* ================= rendering ================= */
+function mascotImg(state){
+  const p = persona();
+  return (p.img && p.img[state]) || p.img.neutral;
+}
+function setHeroMascot(state, motion){
+  const img = document.getElementById("heroMascotImg");
+  const box = document.getElementById("heroMascot");
+  if(img) img.src = mascotImg(state || "neutral");
+  if(box){
+    box.classList.remove("mascot-float","mascot-bounce","mascot-wave");
+    box.classList.add(motion === "bounce" ? "mascot-bounce" : motion === "wave" ? "mascot-wave" : "mascot-float");
+  }
+}
+function linkify(s){
+  return esc(s).replace(/(https?:\/\/[^\s<)]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+}
+function msgEl(role, name, html){
+  const d = document.createElement("div");
+  d.className = "msg " + (role === "user" ? "msg-user" : "msg-assistant");
+  const av = role === "assistant"
+    ? `<div class="avatar mascot"><div class="mascot-video-slot"></div><img src="${mascotImg("neutral")}" alt=""></div>` : "";
+  d.innerHTML = av + `<div class="msg-body"><div class="msg-name">${esc(name)}</div><div class="bubble">${html}</div></div>`;
+  return d;
+}
+function addUserMsg(text, followNote){
+  const box = document.getElementById("messages");
+  const note = followNote ? `<div class="follow-note">↩ ${esc(t("followupNote"))}: «${esc(followNote)}»</div>` : "";
+  box.appendChild(msgEl("user", S.name || t("you"), note + `<p>${linkify(text)}</p>`));
+  hideEmpty();
+}
+function addAssistantShell(){
+  const box = document.getElementById("messages");
+  const el = msgEl("assistant", persona().name[S.lang] || "Finn", "");
+  box.appendChild(el);
+  hideEmpty();
+  return el.querySelector(".bubble");
+}
+function hideEmpty(){ document.getElementById("emptyState").style.display = "none"; }
+function scrollBottom(){ requestAnimationFrame(() => window.scrollTo({top:document.body.scrollHeight, behavior:"smooth"})); }
+
+function stepLineHTML(st, live){
+  const icon = st.status === "ok" ? "ok" : st.status === "failed" ? "failed" : st.status === "skipped" ? "skipped" : "run";
+  const isRoute = st.server === "all-mcp";
+  const label = isRoute ? t("routeStep") : serverName(st.server);
+  const tool = isRoute ? "" : `<span class="tool">${esc(st.tool || "")}</span>`;
+  const ms = st.ms ? `<span class="ms">${st.ms}ms</span>` : "";
+  const flag = !isRoute && serverCountry(st.server) ? ` ${COUNTRY_FLAG[serverCountry(st.server)] || ""}` : "";
+  return `<div class="trace-line${live ? " live" : ""}"><span class="st ${icon}"></span><span class="srv">${esc(label)}${flag}</span>${tool}${ms}</div>`;
+}
+function traceHTML(steps){
+  if(!steps || !steps.length) return "";
+  return `<div class="trace"><div class="trace-head">${esc(t("traceTitle"))}</div>${steps.map(s => stepLineHTML(s)).join("")}</div>`;
+}
+function sourcesHTML(sources){
+  if(!sources || !sources.length) return "";
+  const links = sources.slice(0, 6).map(s =>
+    `<a href="${esc(s.url)}" target="_blank" rel="noopener">↗ ${esc(s.title || s.url)}</a>`).join("");
+  return `<div class="sources"><div class="sources-head">${esc(t("sourcesTitle"))}</div>${links}</div>`;
+}
+function alternativesHTML(alts, q){
+  if(!alts || !alts.length) return "";
+  const chips = alts.slice(0, 3).map((a, i) => {
+    const flag = a.country ? (COUNTRY_FLAG[a.country] || "") + " " : "";
+    const needs = (a.params_required || []).length
+      ? `<small>${esc(t("needsArgs"))} ${(a.params_required || []).join(", ")}</small>` : "";
+    return `<button class="alt-chip" onclick="App.runAlternative(${i}, this)" data-alt='${esc(JSON.stringify(a))}'>${flag}${esc(serverName(a.server))} · <span style="font-family:var(--mono);font-size:12px">${esc(a.tool)}</span>${needs}</button>`;
+  }).join("");
+  return `<div class="alt-row">${chips}</div>`;
+}
+function disambHTML(alts, q){
+  const countries = [...new Set((alts || []).map(a => a.country).filter(Boolean))];
+  if(countries.length < 2) return "";
+  const btns = countries.map(c =>
+    `<button class="disamb-btn" onclick="App.askWithCountry(${esc(JSON.stringify(q))}, '${c}')">${COUNTRY_FLAG[c] || ""} ${esc((t("countries") || {})[c] || c)}</button>`).join("");
+  return `<div class="disamb"><p>${esc(t("disambTitle"))}</p><p style="font-weight:400;color:var(--muted);font-size:13px">${esc(t("disambHint"))}</p><div class="disamb-btns">${btns}</div></div>`;
+}
+
+/* ---- rich result cards (key-tolerant: never assumes exact tool schemas) ---- */
+function findArrays(obj, depth){
+  const out = [];
+  if(depth > 3 || !obj || typeof obj !== "object") return out;
+  for(const [k, v] of Object.entries(obj)){
+    if(Array.isArray(v) && v.length && typeof v[0] === "object") out.push({key:k, items:v});
+    else if(v && typeof v === "object") out.push(...findArrays(v, depth + 1));
+  }
+  return out;
+}
+function hasKeys(o, keys){ return o && typeof o === "object" && keys.some(k => k in o); }
+function renderResult(result, category){
+  if(result === null || result === undefined) return "";
+  if(typeof result === "string") return `<p>${linkify(result)}</p>`;
+  if(typeof result !== "object") return `<p>${esc(String(result))}</p>`;
+  let html = "";
+  // currency: {rates: {USD: n, ...}} or flat currency-code keys
+  const rates = result.rates && typeof result.rates === "object" ? result.rates : null;
+  if(rates){
+    const rows = Object.entries(rates).slice(0, 12).map(([c, v]) =>
+      `<tr><td><strong>${esc(c)}</strong></td><td style="direction:ltr;text-align:end">${esc(String(v))}</td></tr>`).join("");
+    html += `<table class="rates"><thead><tr><th>Currency</th><th style="text-align:end">Rate</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+  const arrays = findArrays(result, 0);
+  for(const {key, items} of arrays.slice(0, 2)){
+    const first = items[0];
+    if(hasKeys(first, ["title", "headline"])){
+      html += `<div class="cards">` + items.slice(0, 6).map(it => {
+        const title = it.title || it.headline || "";
+        const url = it.url || it.link || "";
+        const meta = [it.source, it.published_at, it.date, it.time].filter(Boolean).join(" · ");
+        return `<div class="news-item">${url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(title)}</a>` : `<strong>${esc(title)}</strong>`}${it.summary ? `<div class="sub">${esc(it.summary)}</div>` : ""}${meta ? `<div class="meta">${esc(meta)}</div>` : ""}</div>`;
+      }).join("") + `</div>`;
+    } else if(hasKeys(first, ["price", "price_text", "amount"])){
+      html += `<div class="cards">` + items.slice(0, 6).map(it => {
+        const name = it.name || it.title || it.route || it.from && it.to ? `${it.from || ""} → ${it.to || ""}` : (it.name || it.title || "");
+        const price = it.price_text || it.price || it.amount || "";
+        const sub = [it.departure, it.departure_time, it.time, it.duration, it.badge, it.discount].filter(Boolean).join(" · ");
+        const url = it.url || it.link || "";
+        return `<div class="card"><div class="card-row"><h4>${url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(name)}</a>` : esc(name)}</h4>${price !== "" ? `<span class="price" style="direction:ltr">${esc(String(price))}</span>` : ""}</div>${sub ? `<p class="sub">${esc(sub)}</p>` : ""}</div>`;
+      }).join("") + `</div>`;
+    } else {
+      html += `<div class="cards">` + items.slice(0, 6).map(it => {
+        const title = it.name || it.title || it.label || "";
+        const rest = Object.entries(it).filter(([k]) => !["name","title","label","url","link"].includes(k)).slice(0, 4)
+          .map(([k, v]) => `<span><strong>${esc(k)}:</strong> ${esc(typeof v === "object" ? JSON.stringify(v) : String(v))}</span>`).join(" · ");
+        const url = it.url || it.link || "";
+        return `<div class="card">${title ? `<h4>${url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(title)}</a>` : esc(title)}</h4>` : ""}${rest ? `<p class="sub">${rest}</p>` : ""}</div>`;
+      }).join("") + `</div>`;
+    }
+  }
+  if(!html){
+    // flat object → key/value rows (skip noisy meta keys)
+    const skip = new Set(["fetched_at", "source", "disclaimer", "ok"]);
+    const rows = Object.entries(result).filter(([k, v]) => !skip.has(k) && v !== null && typeof v !== "object")
+      .slice(0, 14).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${typeof v === "string" && /^https?:\/\//.test(v) ? `<a href="${esc(v)}" target="_blank" rel="noopener">${esc(v)}</a>` : esc(String(v))}</dd>`).join("");
+    if(rows) html += `<dl class="kv">${rows}</dl>`;
+    const disc = result.disclaimer || result.source;
+    if(disc) html += `<p class="note">${esc(String(disc))}</p>`;
+    if(!html) html = `<p>${esc(JSON.stringify(result).slice(0, 500))}</p>`;
+  }
+  html += `<details class="raw"><summary>${esc(t("details"))}</summary><pre>${esc(JSON.stringify(result, null, 2).slice(0, 8000))}</pre></details>`;
+  return html;
+}
+
+/* ================= ask flow ================= */
+const CITY_WORDS = ["berlin","munich","münchen","hamburg","istanbul","ankara","izmir","antalya","gorgan","گرگان","تهران","برلین","مونیخ","هامبورگ","استانبول","آنکارا","tehran","cologne","köln","frankfurt","stuttgart","trabzon","bursa","bodrum"];
+const FOLLOW_RE = /(برگشت|بازگشت|دوباره|بیشتر|ارزون|گرون|دیگر|همون|return|back|more|cheaper|again|cheapest|rück|zurück|mehr|günstiger|dönüş|daha|ucuz|tekrar)/i;
+function namesPlace(q){
+  const lq = q.toLowerCase();
+  return CITY_WORDS.some(c => lq.includes(c));
+}
+function isFollowUp(q){
+  if(!lastContext) return false;
+  if(q.length > 70) return false;
+  if(namesPlace(q)) return false;
+  // a follow-up either matches a follow-up pattern, or is very short
+  // («و برگشتش؟» is 9 chars); short standalone questions like
+  // «آخرین اخبار تاگس‌شاو» (20 chars) must NOT be treated as follow-ups.
+  return FOLLOW_RE.test(q) || q.trim().length <= 12;
+}
+function pushHistory(role, text, extra){
+  S.history.push({role, text:String(text).slice(0, 2000), ts:Date.now(), ...(extra || {})});
+  if(S.history.length > 50) S.history = S.history.slice(-50);
+  saveState();
+}
+async function send(){
+  const inp = document.getElementById("composerInput");
+  const q = inp.value.trim();
+  if(!q || sending) return;
+  inp.value = ""; autoGrow(inp);
+  await ask(q);
+}
+async function ask(question, opts){
+  opts = opts || {};
+  if(sending) return;
+  if(!DEMO && !bridge.online){
+    addUserMsg(question);
+    const b = addAssistantShell();
+    b.innerHTML = `<div class="err-box">${esc(t("noBridgeAsk"))}</div>
+      <div style="margin-top:10px"><button class="btn small" onclick="App.checkBridge(true)">${esc(t("recheck"))}</button>
+      <button class="btn small" onclick="App.enterDemo()" style="margin-inline-start:8px">${esc(t("tryDemo"))}</button></div>`;
+    document.getElementById("setupCard").style.display = "block";
+    scrollBottom();
+    return;
+  }
+  sending = true;
+  document.getElementById("sendBtn").disabled = true;
+  // follow-up: prepend last resolved route context into the question text
+  let effectiveQ = question, followNote = null;
+  if(!opts.noFollow && isFollowUp(question)){
+    effectiveQ = `[context: ${lastContext.question}] ${question}`;
+    followNote = lastContext.question;
+  }
+  addUserMsg(question, followNote);
+  pushHistory("user", question);
+  const bubble = addAssistantShell();
+  setHeroMascot("think", "bounce");
+  bubble.innerHTML = `<span class="thinking"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></span> <span style="color:var(--muted)">${esc(t("thinking"))}</span>`;
+  scrollBottom();
+  let res;
+  try{
+    if(DEMO){ res = await demoAsk(question); }
+    else {
+      const loc = opts.country ? {country: opts.country} : (S.country ? {country: S.country} : undefined);
+      res = await bridgePost("/api/ask", {question: effectiveQ, ...(loc ? {location: loc} : {})});
+    }
+  }catch(e){
+    bubble.innerHTML = `<div class="err-box">${esc(t("errorBridge"))}</div>`;
+    bridge.online = false; setStatus("offline");
+    sending = false; document.getElementById("sendBtn").disabled = false;
+    setHeroMascot("neutral", "float");
+    return;
+  }
+  await renderAnswer(bubble, res, question, effectiveQ);
+  sending = false; document.getElementById("sendBtn").disabled = false;
+}
+async function renderAnswer(bubble, res, question, effectiveQ){
+  const steps = res.steps || [];
+  const sources = res.sources || [];
+  const routing = res.routing || {};
+  // --- staged trace animation (the signature element) ---
+  let traceBox = document.createElement("div");
+  bubble.innerHTML = `<div class="trace"><div class="trace-head">${esc(t("traceTitle"))}</div><div class="trace-live">${stepLineHTML({server:"all-mcp", tool:"route", status:"run", ms:0}, true)}</div></div>`;
+  scrollBottom();
+  const liveBox = bubble.querySelector(".trace-live");
+  const shown = [];
+  for(const st of steps){
+    await sleep(380);
+    shown.push(st);
+    liveBox.innerHTML = shown.map(s => stepLineHTML(s)).join("");
+    scrollBottom();
+  }
+  await sleep(200);
+  // --- answer ---
+  let html = traceHTML(steps);
+  const okExec = res.executed && !res.error && !res.is_error;
+  if(okExec && routing.server){
+    setHeroMascot("happy", "float");
+    lastContext = {question, server: routing.server, tool: routing.tool};
+    const flag = serverCountry(routing.server) ? (COUNTRY_FLAG[serverCountry(routing.server)] || "") + " " : "";
+    html += `<p style="margin-top:12px">✅ ${esc(t("answeredBy"))} <strong>${flag}${esc(serverName(routing.server))}</strong>${routing.reason && res.mode === "llm" && !DEMO ? ` — <span style="color:var(--muted)">${esc(routing.reason)}</span>` : ""}</p>`;
+    if(res.mode === "search-fallback") html += `<p class="note" style="margin-top:0">${esc(t("searchFallbackNote"))}</p>`;
+    html += renderResult(res.result, serverCategory(routing.server));
+  } else if(res.needs_arguments && res.needs_arguments.length){
+    setHeroMascot("think", "float");
+    html += `<p style="margin-top:12px">${esc(t("needsArgs"))}</p><p><code>${res.needs_arguments.map(esc).join("</code> · <code>")}</code></p><p class="note">${esc(t("needsArgsHint"))}</p>`;
+    if(routing.server) lastContext = {question, server: routing.server, tool: routing.tool};
+  } else if(res.error){
+    setHeroMascot("neutral", "float");
+    const msg = /not published on PyPI/i.test(res.error) ? t("errorNotOnPyPI")
+      : /No tool in the catalog/i.test(res.error) ? t("errorNoMatch") : res.error;
+    html += `<div class="err-box">${esc(msg)}</div>`;
+  } else {
+    html += `<p style="margin-top:12px">${esc(t("errorGeneric"))}</p>`;
+  }
+  html += sourcesHTML(sources);
+  // disambiguation (both countries offered) + alternatives
+  html += disambHTML(res.alternatives, question);
+  if(res.alternatives && res.alternatives.length) html += alternativesHTML(res.alternatives, question);
+  if(res.sampleNote) html += `<div class="sample-note">${esc(res.sampleNote)}</div>`;
+  bubble.innerHTML = html;
+  // store a readable summary so restored history reads like an answer,
+  // not a log line ([server/tool] ok)
+  const summary = (bubble.innerText || "").replace(/\s+/g, " ").trim().slice(0, 400);
+  pushHistory("assistant", summary || (res.error || "ok"), {server: routing.server || null});
+  scrollBottom();
+}
+async function runAlternative(i, btn){
+  let alt;
+  try{ alt = JSON.parse(btn.getAttribute("data-alt")); }catch(e){ return; }
+  if((alt.params_required || []).length){
+    const inp = document.getElementById("composerInput");
+    inp.value = `${serverName(alt.server)} — ${t("needsArgs")} ${(alt.params_required || []).join(", ")}: `;
+    inp.focus();
+    return;
+  }
+  if(DEMO){ ask(`${serverName(alt.server)} ${alt.tool}`); return; }
+  if(!bridge.online) return;
+  sending = true;
+  const bubble = addAssistantShell();
+  bubble.innerHTML = `<span class="thinking"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></span>`;
+  try{
+    const out = await bridgePost("/api/call", {server: alt.server, tool: alt.tool, arguments: {}});
+    const res = {steps:[{server:"all-mcp", tool:"route", status:"ok", ms:0},
+      {server:alt.server, tool:alt.tool, status: out.error ? "failed" : "ok", ms:0}],
+      sources: [], executed: !out.error, routing:{server:alt.server, tool:alt.tool},
+      result: out.result, error: out.error, alternatives: []};
+    if(out.error) res.sources = [];
+    await renderAnswer(bubble, res, alt.tool, alt.tool);
+  }catch(e){
+    bubble.innerHTML = `<div class="err-box">${esc(t("errorBridge"))}</div>`;
+  }
+  sending = false;
+}
+
+/* ================= demo mode (canned, honestly labeled) ================= */
+function demoAsk(q){
+  const lq = q.toLowerCase();
+  const isTrain = /(قطار|ترن|train|zug|tren|berlin|مونیخ|munich|münchen|برلین)/i.test(q);
+  const isNews = /(خبر|news|nachricht|haber|تاگس|tagesschau)/i.test(q);
+  const isFx = /(دلار|dollar|ارز|döviz|wechselkurs|نرخ|euro|یورو|tl|لیر)/i.test(q);
+  const base = {mode:"llm", provider:"demo", location:{country:S.country || null, source:"hint"}};
+  if(isTrain){
+    return sleep(900).then(() => ({...base, executed:true,
+      routing:{server:"flixtrain-mcp", tool:"flixtrain_search_trains", reason:"Demo script"},
+      result:{trains:[
+        {from:"Berlin", to:"München", price:"€46.48", note:"from — cheapest"},
+        {from:"Berlin", to:"München", price:"€52.90", note:""},
+        {from:"Berlin", to:"München", price:"€58.40", note:""}],
+        summary:"3 trains Berlin → München, from €46.48"},
+      steps:[{server:"all-mcp", tool:"route", status:"ok", ms:41},
+        {server:"flixtrain-mcp", tool:"flixtrain_search_trains", status:"ok", ms:1210}],
+      sources:[{title:"flixtrain-mcp on GitHub", url:"https://github.com/mohammad-abbasi-sh/flixtrain-mcp"},
+        {title:"flixtrain.com", url:"https://www.flixtrain.com"}],
+      alternatives:[], sampleNote:t("trainSampleNote")}));
+  }
+  if(isNews){
+    return sleep(900).then(() => ({...base, executed:true,
+      routing:{server:"tagesschau-mcp", tool:"tagesschau_headlines", reason:"Demo script"},
+      result:{headlines:[
+        {title:"Beispiel-Schlagzeile 1 (Demo — kein echter Titel)", source:"tagesschau.de"},
+        {title:"Beispiel-Schlagzeile 2 (Demo — kein echter Titel)", source:"tagesschau.de"},
+        {title:"Beispiel-Schlagzeile 3 (Demo — kein echter Titel)", source:"tagesschau.de"}]},
+      steps:[{server:"all-mcp", tool:"route", status:"ok", ms:38},
+        {server:"tagesschau-mcp", tool:"tagesschau_headlines", status:"ok", ms:860}],
+      sources:[{title:"tagesschau-mcp on GitHub", url:"https://github.com/mohammad-abbasi-sh/tagesschau-mcp"},
+        {title:"tagesschau.de", url:"https://www.tagesschau.de"}],
+      alternatives:[], sampleNote:t("sampleLabel") + " — " + t("demoNote")}));
+  }
+  if(isFx){
+    return sleep(900).then(() => ({...base, executed:true,
+      routing:{server:"tcmb-mcp", tool:"tcmb_get_rates", reason:"Demo script"},
+      result:{rates:{USD:"42.50", EUR:"48.20", GBP:"56.10"}, base:"TRY", note:"illustrative"},
+      steps:[{server:"all-mcp", tool:"route", status:"ok", ms:35},
+        {server:"tcmb-mcp", tool:"tcmb_get_rates", status:"ok", ms:940}],
+      sources:[{title:"tcmb-mcp on GitHub", url:"https://github.com/mohammad-abbasi-sh/tcmb-mcp"},
+        {title:"tcmb.gov.tr", url:"https://www.tcmb.gov.tr"}],
+      alternatives:[], sampleNote:t("sampleLabel") + " — " + t("demoNote")}));
+  }
+  return sleep(600).then(() => ({...base, executed:false,
+    error:t("demoFallback"),
+    steps:[{server:"all-mcp", tool:"route", status:"ok", ms:30}],
+    sources:[], alternatives:[]}));
+}
+function enterDemo(){
+  DEMO = true;
+  const u = new URL(location.href); u.searchParams.set("demo", "1");
+  history.replaceState(null, "", u.toString());
+  setStatus("demo");
+  document.getElementById("setupCard").style.display = "none";
+  const b = addAssistantShell();
+  b.innerHTML = `<p><span class="badge sample">${esc(t("demoBadge"))}</span> ${esc(t("demoNote"))}</p><p>${esc(t("tryOne"))}</p>
+    <div class="chips" style="justify-content:flex-start;margin-top:8px">${t("samples").map(s => `<button class="chip" onclick="App.ask(${esc(JSON.stringify(s))})">${esc(s)}</button>`).join("")}</div>
+    <div style="margin-top:12px"><button class="btn small" onclick="App.exitDemo()">${esc(t("exitDemo"))}</button></div>`;
+  hideEmpty();
+  scrollBottom();
+}
+function exitDemo(){
+  DEMO = false;
+  const u = new URL(location.href); u.searchParams.delete("demo");
+  history.replaceState(null, "", u.toString());
+  checkBridge(true);
+}
+
+/* ================= voice (browser-native, free, no key) ================= */
+function toggleVoice(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ toast(t("voiceUnsupported")); return; }
+  if(listening && recog){ recog.stop(); return; }
+  recog = new SR();
+  recog.lang = {fa:"fa-IR", en:"en-US", de:"de-DE", tr:"tr-TR"}[S.lang] || "en-US";
+  recog.interimResults = true; recog.continuous = false;
+  const inp = document.getElementById("composerInput");
+  const btn = document.getElementById("micBtn");
+  recog.onresult = (e) => {
+    let txt = "";
+    for(let i = 0; i < e.results.length; i++) txt += e.results[i][0].transcript;
+    inp.value = txt; autoGrow(inp);
+  };
+  recog.onstart = () => { listening = true; btn.classList.add("listening"); btn.title = t("listening"); };
+  recog.onend = () => { listening = false; btn.classList.remove("listening"); btn.title = "Voice input"; if(inp.value.trim()) inp.focus(); };
+  recog.onerror = () => { listening = false; btn.classList.remove("listening"); };
+  recog.start();
+}
+
+/* ================= i18n + chrome ================= */
+function applyI18n(){
+  const L = I18N[S.lang] || I18N.en;
+  document.documentElement.lang = S.lang;
+  document.documentElement.dir = L.dir;
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const k = el.getAttribute("data-i18n");
+    if(L[k] !== undefined && typeof L[k] === "string") el.textContent = L[k];
+  });
+  document.querySelectorAll("[data-i18n-ph]").forEach(el => {
+    const k = el.getAttribute("data-i18n-ph");
+    if(L[k] !== undefined) el.placeholder = L[k];
+  });
+  document.getElementById("langSelect").value = S.lang;
+  document.getElementById("setLangSelect").value = S.lang;
+  document.getElementById("setThemeSelect").value = S.theme;
+  renderPersonaGrid(); renderCountryGrid(); renderSamples(); renderGreeting();
+  renderMiniPersonas(); renderMiniCountries(); renderCountryChip();
+  updateMemoryStats();
+  setStatus(DEMO ? "demo" : bridge.online ? "online" : "offline");
+}
+function renderPersonaGrid(){
+  const g = document.getElementById("personaGrid");
+  g.innerHTML = Object.entries(PERSONAS).map(([id, p]) => `
+    <button class="persona-card" onclick="App.pickPersona('${id}')">
+      <span class="mascot mascot-float"><span class="mascot-video-slot"></span><img src="${p.img.greet}" alt="${esc(p.name[S.lang])}"></span>
+      <h3>${p.emoji} ${esc(p.name[S.lang])}</h3>
+      <div class="role">${esc(p.role[S.lang])}</div>
+      <p>${esc(p.vibe[S.lang])}</p>
+    </button>`).join("");
+}
+function renderCountryGrid(){
+  const g = document.getElementById("countryGrid");
+  g.innerHTML = COUNTRIES.map(c => `
+    <button class="country-card" onclick="App.pickCountry('${c.code}')">
+      <span class="flag">${c.flag}</span>
+      <h3>${esc((t("countries") || {})[c.code] || c.code)}</h3>
+      <p>${esc((t("countryHint") || {})[c.code] || "")} · ${c.servers} MCP</p>
+    </button>`).join("");
+}
+function renderSamples(){
+  const c = document.getElementById("sampleChips");
+  c.innerHTML = t("samples").map(s =>
+    `<button class="chip" onclick="App.ask(${esc(JSON.stringify(s))})">${esc(s)}</button>`).join("");
+}
+function renderGreeting(){
+  const p = persona();
+  document.getElementById("greetingTitle").textContent = p.greet[S.lang];
+  document.getElementById("greetingSub").textContent = t("greetingSub");
+  setHeroMascot("greet", "wave");
+  setTimeout(() => setHeroMascot("neutral", "float"), 3600);
+}
+function renderMiniPersonas(){
+  const g = document.getElementById("miniPersonas");
+  g.innerHTML = Object.entries(PERSONAS).map(([id, p]) => `
+    <button class="mini-persona ${S.persona === id ? "sel" : ""}" onclick="App.pickPersona('${id}', true)">
+      <span class="mascot"><span class="mascot-video-slot"></span><img src="${p.img.neutral}" alt=""></span>
+      ${p.emoji} ${esc(p.name[S.lang])}
+    </button>`).join("");
+}
+function renderMiniCountries(){
+  const g = document.getElementById("miniCountries");
+  const any = `<button class="mini-country ${!S.country ? "sel" : ""}" onclick="App.setCountry('')">🌍 ${esc(t("anyCountry"))}</button>`;
+  g.innerHTML = any + COUNTRIES.map(c => `
+    <button class="mini-country ${S.country === c.code ? "sel" : ""}" onclick="App.setCountry('${c.code}')">
+      ${c.flag} ${esc((t("countries") || {})[c.code] || c.code)}
+    </button>`).join("");
+}
+function renderCountryChip(){
+  const f = document.getElementById("countryFlag");
+  const c = document.getElementById("countryCode");
+  f.textContent = S.country ? (COUNTRY_FLAG[S.country] || "🌍") : "🌍";
+  c.textContent = S.country || "—";
+  document.getElementById("countryChip").title =
+    S.country ? ((t("countries") || {})[S.country] || S.country) : t("anyCountry");
+}
+function renderCountryPopover(){
+  const p = document.getElementById("countryPopover");
+  const any = `<button class="${!S.country ? "sel" : ""}" onclick="App.setCountry('');App.toggleCountryPopover()">🌍 ${esc(t("anyCountry"))}</button>`;
+  p.innerHTML = any + COUNTRIES.map(c =>
+    `<button class="${S.country === c.code ? "sel" : ""}" onclick="App.setCountry('${c.code}');App.toggleCountryPopover()">${c.flag} ${esc((t("countries") || {})[c.code] || c.code)} · ${c.servers} MCP</button>`).join("");
+}
+function updateMemoryStats(){
+  const el = document.getElementById("memoryStats");
+  if(el) el.textContent = S.history.length
+    ? `${S.history.length} ${t("msgsCount")} · ${persona().name[S.lang]} · ${S.country ? (COUNTRY_FLAG[S.country] + " " + S.country) : t("anyCountry")}`
+    : t("memoryEmpty");
+}
+
+/* ================= onboarding / views ================= */
+function showView(id){
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+function obStep(n){
+  document.querySelectorAll(".onb-step").forEach(s => s.classList.remove("active"));
+  document.getElementById("ob-step-" + n).classList.add("active");
+}
+
+/* ================= App namespace (inline handlers) ================= */
+const App = {
+  goHome(e){ e && e.preventDefault(); window.scrollTo({top:0, behavior:"smooth"}); document.getElementById("composerInput").focus(); return false; },
+  send, ask,
+  askWithCountry(q, country){ ask(q, {country, noFollow:true}); },
+  runAlternative,
+  pickPersona(id, fromSettings){
+    S.persona = id; saveState();
+    renderMiniPersonas(); renderGreeting();
+    if(!fromSettings) obStep(2);
+  },
+  pickCountry(code){
+    S.country = code || ""; saveState();
+    renderMiniCountries(); renderCountryChip();
+    obStep(3);
+    setTimeout(() => document.getElementById("nameInput").focus(), 100);
+  },
+  setCountry(code){ S.country = code || ""; saveState(); renderMiniCountries(); renderCountryChip(); updateMemoryStats(); },
+  obBack(n){ obStep(n); },
+  finishOnboarding(){
+    S.name = document.getElementById("nameInput").value.trim().slice(0, 40);
+    S.onboarded = true; saveState();
+    renderGreeting(); showView("view-chat");
+    checkBridge(true);
+    document.getElementById("composerInput").focus();
+  },
+  setLang(lang){ S.lang = I18N[lang] ? lang : "en"; saveState(); applyI18n(); },
+  setTheme(theme){ S.theme = theme === "light" ? "light" : "dark"; saveState();
+    document.documentElement.setAttribute("data-theme", S.theme);
+    document.getElementById("themeBtn").textContent = S.theme === "dark" ? "🌙" : "☀️";
+    document.getElementById("setThemeSelect").value = S.theme; },
+  toggleTheme(){ App.setTheme(S.theme === "dark" ? "light" : "dark"); },
+  toggleCountryPopover(e){
+    if(e) e.stopPropagation();
+    renderCountryPopover();
+    document.getElementById("countryPopover").classList.toggle("open");
+  },
+  openSettings(){
+    document.getElementById("setNameInput").value = S.name || "";
+    document.getElementById("setEndpointInput").value = S.endpoint || DEFAULT_ENDPOINT;
+    document.getElementById("endpointStatus").textContent = "";
+    renderMiniPersonas(); renderMiniCountries(); updateMemoryStats();
+    document.getElementById("settingsPanel").classList.add("open");
+    document.getElementById("overlay").classList.add("open");
+  },
+  closeSettings(){
+    S.name = document.getElementById("setNameInput").value.trim().slice(0, 40);
+    saveState(); renderGreeting();
+    document.getElementById("settingsPanel").classList.remove("open");
+    document.getElementById("overlay").classList.remove("open");
+  },
+  async saveEndpoint(){
+    const v = document.getElementById("setEndpointInput").value.trim().replace(/\/+$/, "") || DEFAULT_ENDPOINT;
+    S.endpoint = v; saveState();
+    const st = document.getElementById("endpointStatus");
+    st.textContent = t("endpointSaved");
+    try{ await bridgeGet("/api/health", 4000); bridge.online = true; setStatus("online");
+      document.getElementById("setupCard").style.display = "none"; st.textContent = t("endpointOk"); }
+    catch(e){ bridge.online = false; setStatus("offline"); st.textContent = t("endpointFail"); }
+  },
+  exportMemory(){
+    const blob = new Blob([JSON.stringify(S, null, 2)], {type:"application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "all-mcp-memory.json";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  },
+  clearMemory(){
+    if(!confirm(t("confirmClear"))) return;
+    const keep = {lang:S.lang, theme:S.theme};
+    S = {...DEFAULTS, ...keep, history:[], onboarded:false};
+    saveState();
+    document.getElementById("messages").innerHTML = "";
+    document.getElementById("emptyState").style.display = "flex";
+    lastContext = null;
+    App.closeSettings();
+    showView("view-onboarding"); obStep(1);
+    applyI18n();
+    toast(t("cleared"));
+  },
+  copyText(txt, btn){
+    const done = () => { if(btn){ const o = btn.textContent; btn.textContent = t("copied"); setTimeout(() => btn.textContent = o, 1500); } };
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(done).catch(() => fallbackCopy(txt, done)); }
+    else fallbackCopy(txt, done);
+  },
+  checkBridge, enterDemo, exitDemo, toggleVoice
+};
+function fallbackCopy(txt, done){
+  const ta = document.createElement("textarea");
+  ta.value = txt; document.body.appendChild(ta); ta.select();
+  try{ document.execCommand("copy"); }catch(e){}
+  ta.remove(); done();
+}
+function toast(msg){
+  const el = document.getElementById("toast");
+  if(!el) return;
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => el.classList.remove("show"), 2800);
+}
+function autoGrow(ta){
+  ta.style.height = "auto";
+  ta.style.height = Math.min(ta.scrollHeight, 150) + "px";
+}
+window.App = App;
+document.addEventListener("click", (e) => {
+  const pop = document.getElementById("countryPopover");
+  if(pop.classList.contains("open") && !pop.contains(e.target) && !document.getElementById("countryChip").contains(e.target))
+    pop.classList.remove("open");
+});
+
+/* ================= init ================= */
+(function init(){
+  document.documentElement.setAttribute("data-theme", S.theme || "dark");
+  document.getElementById("themeBtn").textContent = S.theme === "light" ? "☀️" : "🌙";
+  applyI18n();
+  // restore history (plain bubbles — traces are not re-animated)
+  const box = document.getElementById("messages");
+  S.history.forEach(h => {
+    if(h.role === "user") box.appendChild(msgEl("user", S.name || t("you"), `<p>${linkify(h.text)}</p>`));
+    else box.appendChild(msgEl("assistant", persona().name[S.lang] || "Finn", `<p>${linkify(h.text)}</p>`));
+  });
+  if(S.history.length) hideEmpty();
+  if(DEMO || S.onboarded){ showView("view-chat"); }
+  else { showView("view-onboarding"); obStep(1); }
+  const inp = document.getElementById("composerInput");
+  inp.addEventListener("input", () => autoGrow(inp));
+  inp.addEventListener("keydown", (e) => {
+    if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); send(); }
+  });
+  if(DEMO){ setStatus("demo"); }
+  else { checkBridge(false); }
+  refreshServerMap();
+})();
+</script>
+</body>
+</html>
