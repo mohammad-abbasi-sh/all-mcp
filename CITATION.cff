@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use all-mcp, please cite it as below."
+authors:
+  - family-names: "Abbasi"
+    given-names: "Mohammad"
+title: "all-mcp — One MCP Server for All of Them"
+version: 0.1.0
+date-released: 2026-11-18
+url: "https://github.com/mohammad-abbasi-sh/all-mcp"
+repository-code: "https://github.com/mohammad-abbasi-sh/all-mcp"
+license: PolyForm-Noncommercial-1.0.0
+type: software
