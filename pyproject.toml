@@ -17,5 +17,10 @@ authors = [{ name = "Mohammad Abbasi" }]
 [project.scripts]
 all-mcp = "all_mcp.server:main"
 
+# The chat site lives in docs/ (GitHub Pages) — it must never ship
+# inside the Python package.
+[tool.hatch.build]
+exclude = ["docs"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/all_mcp"]
